@@ -116,11 +116,11 @@ export default function Approach() {
                 </p>
 
                 <div style={{ marginTop: 44, paddingTop: 36, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                    <h2 style={{ ...h2, marginTop: 0 }}>Bring us the one you wouldn't sign</h2>
+                    <h2 style={{ ...h2, marginTop: 0 }}>Bring us the job you can't afford to get wrong</h2>
                     <p style={{ ...body, marginBottom: 26 }}>
                         The job that eats a day a week. The report nobody trusts. The thing
-                        you'd hand to AI if you were willing to put your name on the result.
-                        That's the one we want.
+                        you'd hand to AI tomorrow, if only you could be sure the answer was
+                        right. That's the one we want.
                     </p>
                     <Link to="/contact" state={{ from: '/approach' }} style={cta}>
                         Tell us what's slow <ArrowRight size={16} />
