@@ -150,11 +150,12 @@ def build_html() -> str:
   </div>
 
   <div class="proof">
-    <p><b>You don't have to take our word for it.</b> Nineteen working applications are on
+    <p><b>You don't have to take our word for it.</b> Eleven working applications run on
     our site and you can open every one without talking to anybody — a parish running its
-    own bulletin, a restaurant platform, an ICU dashboard, a ticketing site where fans pay
-    what the venue set and nothing else. Five more run on client domains. Some of it was
-    drafted by AI; all of it was read by someone who had to answer for it.</p>
+    own bulletin, a restaurant platform, a chess engine that plays you, a double-entry
+    ledger, a machine-learning workbench you load your own data into. Alongside them, eight
+    research reports and four data dashboards, equally open. Some of it was drafted by AI;
+    all of it was read by someone who had to answer for it.</p>
   </div>
 
   <div class="concede">
