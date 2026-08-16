@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #030712;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Premium Color Palette */
+  --bg-primary: #030712;
+  --bg-secondary: #0f172a;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #8b5cf6;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --glass: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(12px);
+}
+
+/* No universal reset here on purpose.
+ *
+ * Tailwind's preflight already applies `box-sizing: border-box; margin: 0;
+ * padding: 0` to every element, and it does so inside `@layer base`. A
+ * second copy written here would be *unlayered*, and unlayered CSS wins
+ * against every cascade layer no matter what its specificity is - so a bare
+ * `* { padding: 0 }` silently defeated every padding and margin utility in
+ * the application. Classes were present in the markup and in the stylesheet,
+ * and computed to zero. */
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #1e1b4b, var(--bg-primary)),
+              radial-gradient(circle at bottom right, #1e1b4b, var(--bg-primary));
+}
+
+.app-container {
+  min-height: 100vh;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+.button-primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
+}
+
+.title-gradient {
+  background: linear-gradient(to right, #60a5fa, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Base Layout */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* --- Report canvas -------------------------------------------------------
+   Used by the analyst report. These were referenced as Tailwind classes in
+   several places without ever being defined - with an empty theme config,
+   `scrollbar-hide` and friends compiled to nothing at all, so the panes kept
+   their scrollbars and the animations never ran. Defining them here rather
+   than extending the Tailwind theme keeps them next to the other three
+   hand-written utilities this app already relies on. */
+
+.scrollbar-hide {
+  scrollbar-width: none;             /* Firefox */
+  -ms-overflow-style: none;          /* old Edge */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* A thread that crosses the top edge of a tile while it refetches. Deliberately
+   not a spinner over the content: the previous numbers stay readable and in
+   place, which is what makes cross-filtering feel immediate rather than
+   flickery. */
+@keyframes tileProgress {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* The report canvas overrides the body gradient - a chart surface has to be
+   flat for the palette to have been validated against it. */
+.report-root {
+  background: #050505;
+}
