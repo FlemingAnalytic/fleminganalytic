@@ -557,7 +557,30 @@ class DataProfiler:
                 meta["geo_hint"] = "state" if col_lower == 'st' else "county"
 
             if pd.api.types.is_numeric_dtype(series):
-                if meta["unique"] <= 20 or meta["unique_pct"] < 5:
+                # Few distinct values means a code, a flag or a small scale -
+                # something to group by, whatever its dtype.
+                if meta["unique"] <= 20:
+                    is_dimension = True
+                elif meta["unique_pct"] < 5:
+                    # Rarely-varying values usually mean a label, but not when
+                    # the column carries fractions. A price repeats because a
+                    # catalogue has 130 products, not because it identifies
+                    # anything - AdventureWorks has ~1,000 distinct sales
+                    # amounts across 60,398 rows, which is 1.7% and would
+                    # otherwise make every monetary column a dimension and
+                    # leave the dataset with no measures at all. Nobody groups
+                    # by 3578.27.
+                    clean = series.replace([np.inf, -np.inf], np.nan).dropna()
+                    has_fractions = (
+                        pd.api.types.is_float_dtype(series)
+                        and len(clean) > 0
+                        and not np.allclose(clean, clean.round())
+                    )
+                    is_dimension = not has_fractions
+                else:
+                    is_dimension = False
+
+                if is_dimension:
                     meta["type"] = "categorical_numeric"
                     meta["role"] = "dimension"
                 else:
@@ -726,8 +749,22 @@ class DataProfiler:
             if 1 < self.columns_meta[d]["unique"] <= 100
         ]
         
-        # Sort useful dims by uniqueness (prefer fewer categories for simpler charts)
-        useful_dims.sort(key=lambda d: self.columns_meta[d]["unique"])
+        # Rank by how readable the resulting chart is, not by how few
+        # categories it has. Sorting on fewest put every binary flag at the
+        # top - a dataset would open on "how does price vary by
+        # HouseOwnerFlag" when it also had Category, Country and Year sitting
+        # there. Two bars is the least informative split a column can offer,
+        # and it is the one that always won. Around half a dozen categories
+        # reads best, so distance from that orders the list, ties going to
+        # whichever column the author put first.
+        # Named categories are also preferred over numeric codes: "Country"
+        # and "Education" label their own axis, while a column of 0/1/2/3
+        # needs the reader to already know what the numbers stand for.
+        IDEAL_CATEGORIES = 6
+        useful_dims.sort(key=lambda d: (
+            self.columns_meta[d].get("type") == "categorical_numeric",
+            abs(self.columns_meta[d]["unique"] - IDEAL_CATEGORIES),
+        ))
 
         for dim in useful_dims[:3]:
             for meas in measures[:2]:
