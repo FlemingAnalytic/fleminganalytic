@@ -41,7 +41,7 @@ const Navbar = () => {
               {label}
             </Link>
           ))}
-          <button className="btn-start">Start a Project</button>
+          <Link to="/contact" className="btn-start">Start a Project</Link>
         </div>
 
         {/* Mobile hamburger */}

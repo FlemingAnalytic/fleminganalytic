@@ -24,21 +24,26 @@ import {
 import { useDashboardViewModel } from '../viewmodels/dashboardViewModel'
 import '../styles/Home.css'
 
-const PORTFOLIO_MAIN = [
+const PORTFOLIO_EXTERNAL = [
+  { category: "Healthcare",       title: "DentalEDR.net",           desc: "Full dental practice management system. Patient records, scheduling, treatment plans, and billing integration.",                      href: "https://dentaledr.net",            isExternal: true, bg: "#dbeafe", color: "#2563eb" },
+  { category: "Business Tools",   title: "Jobberhub",               desc: "Comprehensive administrative platform for job management and workflow. Includes user manuals for seamless adoption.",                  href: "https://jobberhub.net",            isExternal: true, bg: "#eff6ff", color: "#3b82f6" },
+  { category: "Education",        title: "CodeQuest Academy",       desc: "Learning platform for computer science fundamentals. Interactive lessons, coding exercises, and progress tracking for students.",     href: "https://codequestacademy.net",     isExternal: true, bg: "#fef3c7", color: "#d97706" },
+  { category: "Education / STEM", title: "STEM for 8th Graders",    desc: "STEM resources and interactive activities aimed at 8th-grade students. Curriculum-aligned content for science, tech, and math.",     href: "https://for8thgraders.top",        isExternal: true, bg: "#ecfdf5", color: "#10b981" },
+  { category: "Ticketing",        title: "StubMe.net",                desc: "Honest-pricing ticketing platform for venues. True-to-scale seat picker, per-event fees from the venue payout, sales tax broken out at every step, real scannable QR tickets.", href: "https://stubme.net",            isExternal: true, bg: "#fff7ed", color: "#d94f3a" },
+]
+
+const PORTFOLIO_INTERNAL = [
   { category: "Research / White Paper", title: "Unsupervised ML White Paper", desc: "How unsupervised machine learning extracts structure, outliers, and hidden signal from large unfamiliar datasets. Full case study across 20M SEC ABS-EE filings with four interactive reports.", href: "/whitepaper/", isExternal: true, bg: "#f4f1ff", color: "#7c5cff" },
+  { category: "Space / Simulation", title: "Mars Exploration", desc: "Interactive Mars mission control — live operator API, telemetry, and mission media from a simulated Mars exploration program.", href: "/mars/", isExternal: true, bg: "#fff1f0", color: "#dc2626" },
   { category: "Data Analytics",   title: "Smart Analyst",        desc: "Upload datasets, run ML models, generate visualizations. Demonstrates file handling, data processing, and dynamic charting.",        to: "/analyst",     bg: "#f3e8ff", color: "#9333ea" },
   { category: "Finance",          title: "Stock Market Tools",   desc: "Real-time trading signal scans, Efficient Frontier modeling, and momentum tracking for S&P 500.",                                   to: "/trading",     bg: "#d1fae5", color: "#059669" },
   { category: "News & Data",      title: "News Analytics",       desc: "Automated news aggregation with historical archives. Scheduled tasks, JSON storage, and search functionality.",                      to: "/news",        bg: "#e0f2fe", color: "#0284c7" },
   { category: "AI Chat",          title: "AI Terminal",          desc: "Local LLM chat interface powered by Ollama. Query models, explore app code explanations, and test prompt engineering.",              to: "/chat",        bg: "#fef3c7", color: "#d97706" },
   { category: "Retail/POS",       title: "Restaurant Platform",  desc: "Menu management, order processing, and email notifications. Shows e-commerce patterns and workflow automation.",                     to: "/restaurant",  bg: "#ffe4e6", color: "#e11d48" },
   { category: "PDF Generation",   title: "Astrology Charts",     desc: "Birth chart generation with PDF export. Complex ephemeris calculations, SVG rendering, and document generation.",                    to: "/astro",       bg: "#fdf4ff", color: "#a855f7" },
-  { category: "Healthcare",       title: "DentalEDR.net",        desc: "Full dental practice management system. Patient records, scheduling, treatment plans, and billing integration.",                      href: "https://dentaledr.net",                          isExternal: true, bg: "#dbeafe", color: "#2563eb" },
   { category: "Government Data",  title: "Economic Indicators",  desc: "Federal Reserve data visualization. GDP, debt metrics, and time-series analysis from FRED API.",                                    href: "https://fleminganalytic.com/fred/gdp",           isExternal: true, bg: "#f0fdf4", color: "#16a34a" },
   { category: "Interactive App",  title: "Chess Game",           desc: "AI opponent with difficulty levels. Demonstrates game state management, move validation, and API-driven AI.",                       href: "https://fleminganalytic.com/chess/",             isExternal: true, bg: "#f1f5f9", color: "#475569" },
-]
-
-const PORTFOLIO_EXAMPLES = [
-  { category: "Business Tools",   title: "Jobberhub",              desc: "Comprehensive administrative platform for job management and workflow. Includes user manuals for seamless adoption.",               href: "https://jobberhub.net",                               isExternal: true, bg: "#eff6ff", color: "#3b82f6" },
+  { category: "SEC Filings",      title: "13F-HR Institutional Positioning", desc: "Quarterly analysis of institutional holdings. Manager rankings, crowding momentum, position rotation, and style clusters from SEC EDGAR 13F-HR filings.", href: "/13f/", isExternal: true, bg: "#e3f2fd", color: "#1565c0" },
   { category: "Finance",          title: "TreeView Accounting",    desc: "Double-entry bookkeeping system with hierarchical account visualization, journal entries, and real-time balance validation.",      href: "https://fleminganalytic.com/tvaa/",                   isExternal: true, bg: "#f5f3ff", color: "#7c3aed" },
   { category: "Government/Safety",title: "Nuclear AI Readiness",   desc: "Strategic assessment tool for nuclear facilities. Scores readiness across safety, infrastructure, and operational domains.",       href: "https://fleminganalytic.com/nuclear/",                isExternal: true, bg: "#fefce8", color: "#ca8a04" },
   { category: "Energy",           title: "Energy Forecast",        desc: "Predictive modeling for long-term energy consumption and cost trends. Statistical regression with scenario analysis.",              href: "https://fleminganalytic.com/energy/",                 isExternal: true, bg: "#ecfdf5", color: "#10b981" },
@@ -46,6 +51,7 @@ const PORTFOLIO_EXAMPLES = [
   { category: "Data Viz",         title: "S&P 500 Dashboard",      desc: "Equity market analysis and momentum tracking engine. Historical price data with interactive chart exploration.",                    href: "https://fleminganalytic.com/examples/sp500",          isExternal: true, bg: "#f0fdf4", color: "#22c55e" },
   { category: "Real-time Data",   title: "Weather Map",            desc: "Interactive Leaflet-based weather observation system. Live station data plotted on a zoomable map.",                               href: "https://fleminganalytic.com/examples/weather",        isExternal: true, bg: "#e0f2fe", color: "#0ea5e9" },
   { category: "Tools",            title: "Database Designer",      desc: "Visual schema design tool for relational databases. Drag-and-drop table builder with relationship mapping.",                       href: "https://fleminganalytic.com/examples/dbdesign",       isExternal: true, bg: "#fdf4ff", color: "#d946ef" },
+  { category: "Content Management",title:"Church CMS",              desc: "Drag-and-drop bulletin and page builder for parishes. Client-side content management with localStorage persistence — no server required.", href: "https://fleminganalytic.com/church-cms/",             isExternal: true, bg: "#fff7ed", color: "#ea580c" },
 ]
 
 const Home = () => {
@@ -59,22 +65,55 @@ const Home = () => {
         <div className="hero-container">
             <div className="hero-content animate-in">
                 <h1 className="hero-title">
-                    Full-Stack Development for 
-                    <span className="title-accent">Modern Business Applications</span>
+                    AI writes the first draft.
+                    <span className="title-accent">Somebody still has to read it.</span>
                 </h1>
                 <p className="hero-desc">
-                    We build server APIs, database systems, and responsive interfaces that connect your business to its data. 
-                    From supply chain integrations to custom analytics platforms, we deliver production-ready solutions using state-of-the-art AI tools.
+                    AI didn't remove the work — it moved it. The hours you used to spend producing
+                    a draft are the hours you now spend deciding whether it's true. We do both
+                    halves: drafted at AI speed, then read line by line by a person who answers
+                    for it.
                 </p>
                 <div className="hero-actions">
-                    <Link to="/analyst" className="btn-primary">
-                       See Our New Data Analyst <ArrowRight size={18} />
+                    <Link to="/approach" className="btn-primary">
+                       How we work <ArrowRight size={18} />
                     </Link>
-                    <button className="btn-secondary">Contact Us</button>
+                    <Link to="/contact" state={{ from: '/' }} className="btn-secondary">
+                        Tell us what's slow
+                    </Link>
                 </div>
             </div>
         </div>
       </header>
+
+      {/* Proof. Deliberately before the services pitch: the reason to keep
+          reading is that the work exists and can be opened, not that we can
+          list the things we do. Every figure here was checked against the
+          thing it describes — 19 applications answer on this domain, 5 more
+          run on client and partner domains, and the manual screenshots are
+          captures of the running software. */}
+      <section className="section-padding" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
+        <div className="section-header animate-in">
+            <span className="section-tag">Before you spend a dollar</span>
+            <h2 className="section-title">Press the buttons yourself</h2>
+            <p className="section-desc">
+                Nineteen working applications are on this site and you can open every one of
+                them without talking to anybody — a parish running its own bulletin, a
+                restaurant platform, an ICU dashboard, a ticketing site where fans pay what
+                the venue set and nothing else. Five more run on client and partner domains.
+                Each admin system ships with a manual whose screenshots come out of the
+                running software, so when the software changes the manual is re-run rather
+                than rewritten.
+            </p>
+            <p className="section-desc" style={{ marginTop: '1rem' }}>
+                Some of it was drafted by AI. That is rather the point — and every line of it
+                was read by someone who had to answer for it.{' '}
+                <Link to="/approach" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>
+                    How we work →
+                </Link>
+            </p>
+        </div>
+      </section>
 
       {/* Services Section */}
       <section id="services" className="section-padding">
@@ -191,7 +230,7 @@ const Home = () => {
             <div className="flex justify-between items-end mb-8">
                 <div>
                   <span className="section-tag">Interactive Portfolio</span>
-                  <h2 className="section-title">Application Matrix & Examples</h2>
+                  <h2 className="section-title">Internal Applications</h2>
                   <p className="section-desc max-w-2xl">
                       Working demonstrations of our capabilities across different industries and use cases. Each showcases client-server architecture with responsive frontends.
                   </p>
@@ -205,29 +244,29 @@ const Home = () => {
                       {cardLayout === 'grid' && <LayoutGrid size={18} className="text-blue-600" />}
                       {cardLayout === 'list' && <List size={18} className="text-purple-600" />}
                       {cardLayout === 'compact' && <Maximize2 size={18} className="text-emerald-600" />}
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600">Density: {cardLayout}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600">View</span>
                     </button>
                 </div>
             </div>
         </div>
 
         <div className={`grid-container animate-in layout-${cardLayout}`}>
-            {PORTFOLIO_MAIN.map((item) => (
+            {PORTFOLIO_INTERNAL.map((item) => (
                 <ProjectCard key={item.title} {...item} />
             ))}
         </div>
 
-        {/* Additional Examples */}
+        {/* External Applications */}
         <div className="section-header animate-in" style={{ marginTop: '4rem' }}>
-            <span className="section-tag">Code Examples & Prototypes</span>
-            <h2 className="section-title">Additional Applications</h2>
+            <span className="section-tag">Partner & Client Sites</span>
+            <h2 className="section-title">External Applications</h2>
             <p className="section-desc max-w-2xl">
-                Standalone demos and prototype applications covering specialized industries and tooling.
+                Applications hosted on partner and client domains outside of fleminganalytic.com.
             </p>
         </div>
 
         <div className={`grid-container animate-in layout-${cardLayout}`}>
-            {PORTFOLIO_EXAMPLES.map((item) => (
+            {PORTFOLIO_EXTERNAL.map((item) => (
                 <ProjectCard key={item.title} {...item} />
             ))}
         </div>
@@ -238,17 +277,32 @@ const Home = () => {
         <div className="footer-container">
             <div className="footer-main animate-in">
                 <div className="footer-cta">
-                    <h3>Ready to Build Your Solution?</h3>
-                    <p style={{ color: '#94a3b8', fontSize: '1.25rem', marginBottom: '3rem', fontStyle: 'italic', opacity: 0.6 }}>"The best way to predict the future is to create it."</p>
-                    <button className="btn-primary" style={{ padding: '1.5rem 3rem' }}>
-                        Start Your Project
-                    </button>
+                    <h3>Bring us the one you wouldn't sign</h3>
+                    <p style={{ color: '#94a3b8', fontSize: '1.15rem', marginBottom: '3rem', opacity: 0.75 }}>
+                        The job that eats a day a week. The report nobody trusts. One conversation,
+                        no charge, and a straight answer about whether this is worth doing.
+                    </p>
+                    <Link to="/contact" state={{ from: '/' }} className="btn-primary" style={{ padding: '1.5rem 3rem' }}>
+                        Tell us what's slow
+                    </Link>
                 </div>
                 
                 <div className="footer-links">
-                    <FooterCol title="Services" items={['API Development', 'Database Design', 'Web & Mobile', 'ML & Analytics']} />
-                    <FooterCol title="Portfolio" items={['Smart Analyst', 'Trading Radar', 'Restaurant POS', 'Astro Engine']} />
-                    <FooterCol title="Resources" items={['API Documentation', 'Privacy Policy', 'Terms of Service', 'Contact']} />
+                    <FooterCol title="Start here" items={[
+                        { label: 'How we work', to: '/approach' },
+                        { label: "Tell us what's slow", to: '/contact' },
+                    ]} />
+                    <FooterCol title="See the work" items={[
+                        { label: 'Smart Analyst', to: '/analyst' },
+                        { label: 'Trading Radar', to: '/trading' },
+                        { label: 'Restaurant POS', to: '/restaurant' },
+                        { label: 'Astro Engine', to: '/astro' },
+                    ]} />
+                    <FooterCol title="Read" items={[
+                        { label: 'Unsupervised ML white paper', href: '/whitepaper/' },
+                        { label: 'Mars mission control', href: '/mars/' },
+                        { label: 'Data centres explainer', href: '/datacenters/' },
+                    ]} />
                 </div>
             </div>
 
@@ -258,9 +312,10 @@ const Home = () => {
                     <span>© 2026 Fleming Analytic. Built with High Fidelity.</span>
                 </div>
                 <div className="social-links">
+                    {/* Add href="https://..." when the account exists. Until then
+                        these render nothing rather than linking to "#". */}
                     <SocialLink icon={<Linkedin size={20} />} />
                     <SocialLink icon={<Github size={20} />} />
-                    <SocialLink icon={<Twitter size={20} />} />
                 </div>
             </div>
         </div>
@@ -323,19 +378,30 @@ const ProjectCard = ({ category, title, desc, to, href, isExternal, bg, color })
     )
 }
 
+// Items are {label, to} for in-app routes or {label, href} for the static
+// pages. They used to be bare strings rendered as <li>s, so the whole footer
+// was a list of words that looked like links and did nothing - which reads,
+// to somebody deciding whether to get in touch, like a site that was
+// abandoned halfway.
 const FooterCol = ({ title, items }) => (
     <div className="footer-col">
         <h4>{title}</h4>
         <ul className="footer-list">
             {items.map(item => (
-                <li key={item} className="footer-item">{item}</li>
+                <li key={item.label} className="footer-item">
+                    {item.to
+                        ? <Link to={item.to} className="footer-link">{item.label}</Link>
+                        : <a href={item.href} className="footer-link">{item.label}</a>}
+                </li>
             ))}
         </ul>
     </div>
 )
 
-const SocialLink = ({ icon }) => (
-    <a href="#" className="social-icon">{icon}</a>
+// Only rendered for accounts that exist. An icon linking to "#" is worse than
+// no icon: it invites a click and then does nothing.
+const SocialLink = ({ icon, href }) => (
+    href ? <a href={href} className="social-icon" target="_blank" rel="noreferrer">{icon}</a> : null
 )
 
 export default Home
