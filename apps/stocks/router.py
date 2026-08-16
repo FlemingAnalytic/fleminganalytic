@@ -2,13 +2,16 @@
 Stocks & Trading API Router
 Endpoints for stock analysis, swing trading, and efficient frontier calculations.
 """
-from fastapi import APIRouter, Request
+import logging
+
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 
 import today as td
 import swing
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Stocks"])
 templates = Jinja2Templates(directory="templates")
 
@@ -16,7 +19,28 @@ templates = Jinja2Templates(directory="templates")
 # S&P 500 Routes
 @router.get("/sp500", tags=["Get best of S & P 500, takes quite a while.."])
 async def getsp500():
-    return td.get_tickers()
+    """Ranked S&P 500 tickers, or an honest 503 when the upstream is down.
+
+    This reads prices from Yahoo through yfinance, which is an unauthenticated
+    scrape of somebody else's website and fails accordingly: it currently
+    returns a JSONDecodeError for SPY, leaving an empty frame that the ranking
+    code then indexes into and dies on. That surfaced as a 500 with a
+    traceback, so the page consuming it showed nothing and gave no reason.
+
+    A 503 with a sentence says the same thing usefully - the service is fine,
+    its data source is not, and it is worth trying later. Nothing here retries
+    or caches; that would be a real fix rather than an honest failure.
+    """
+    try:
+        return td.get_tickers()
+    except (IndexError, KeyError, ValueError) as exc:
+        # The shapes an empty upstream frame produces downstream.
+        logger.warning(f"/stocks/sp500: upstream market data unavailable ({type(exc).__name__}: {exc})")
+        raise HTTPException(
+            status_code=503,
+            detail="Market data is unavailable right now — the upstream price feed "
+                   "did not return data. Try again later.",
+        )
 
 
 @router.get("/plot_pie")
