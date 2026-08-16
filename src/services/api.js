@@ -1,8 +1,12 @@
 import axios from 'axios';
 
-// This line now pulls the backend URL from the .env file
-// When you build for production, it will use your fleminganalytic.net address
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.fleminganalytic.com/api';
+// The backend URL, from .env.development / .env.production.
+//
+// No '/api' suffix: every router in main.py is mounted at its bare name
+// (/stocks, /news, /chat, /analyst, ...), so a base URL ending in /api 404s
+// every call in this file, not just the analyst's. The fallback is a last
+// resort - the .env files are what should be setting this.
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.fleminganalytic.com';
 
 /**
  * Generic API client with global error handling
@@ -71,8 +75,15 @@ export const analystApi = {
   },
   classify: (filename, column, method, newName, params = {}) => 
     apiClient.post('/analyst/classify', { filename, column, method, new_name: newName, params }),
-  pivot: (filename, rows, cols, values, aggfunc, filters, weightCol) => 
+  pivot: (filename, rows, cols, values, aggfunc, filters, weightCol) =>
     apiClient.post('/analyst/pivot', { filename, rows, cols, values, aggfunc, filters, weight_col: weightCol }),
+  // Object form, for the report canvas. Takes a request built by
+  // utils/pivotRequest.js and an axios config, so a tile can pass an
+  // AbortController signal and cancel a query the user has moved past.
+  pivotQuery: (request, config) => apiClient.post('/analyst/pivot', request, config),
+  filterValues: (filename, column) =>
+    apiClient.post('/analyst/filter-values', { filename, column }),
+  getColumns: (filename) => apiClient.get(`/analyst/columns/${filename}`),
   visualize: (filename, chartType, x, y, color, column) => 
     apiClient.post('/analyst/visualize', { filename, chart_type: chartType, x, y, color, column }),
   analyzeFeatures: (filename, target = '') => {
