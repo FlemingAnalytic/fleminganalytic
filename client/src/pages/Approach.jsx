@@ -11,10 +11,17 @@ import { ArrowRight } from 'lucide-react';
  * verifiability as the product, concede a point to buy credibility, and
  * close by reframing rather than summarising.
  *
- * Every number on this page was checked against the thing it describes
- * before it was written down. Nineteen applications answer 200 on this
- * domain today; five more run on client and partner domains. The manual
- * claim was verified by opening the generated screenshots.
+ * Every number on this page was checked by loading the page in a browser
+ * and asserting that something renders - not by its status code. This site
+ * is a single-page app, so it answers 200 on every path including ones with
+ * no route behind them, and an earlier version of this file claimed nineteen
+ * applications on the strength of exactly that. Two of the nineteen painted
+ * a navbar over an empty page.
+ *
+ * Eleven applications render and their APIs answer. Eight research reports
+ * and four dashboards render. Three external domains render and present a
+ * valid certificate - two others were dropped because theirs had expired.
+ * The manual claim was verified by opening the generated screenshots.
  */
 const PHASES = [
     {
@@ -85,15 +92,18 @@ export default function Approach() {
                 <h2 style={h2}>You don't have to take our word for it</h2>
 
                 <p style={body}>
-                    Nineteen working applications are on this site right now and you can open
+                    Eleven working applications run on this site right now and you can open
                     every one of them without talking to anybody: a parish that runs its own
-                    bulletin and website, a restaurant platform, an ICU monitoring dashboard,
-                    a ticketing site built so fans pay what the venue set and nothing else.
-                    Five more run on client and partner domains.
+                    bulletin and website, a restaurant platform, a chess engine that plays
+                    you, a double-entry ledger, a machine-learning workbench you can load
+                    your own data into. Alongside them are eight research reports and four
+                    data dashboards, equally open. Three more applications run on client
+                    domains — including a ticketing site built so fans pay what the venue set
+                    and nothing else.
                 </p>
 
                 <p style={body}>
-                    Each of the admin systems ships with a manual whose screenshots are
+                    Two of the admin systems ship with a manual whose screenshots are
                     captured from the running software, so when the software changes the
                     manual is re-run rather than rewritten. Some of all this was drafted by
                     AI — that is rather the point — and every line of it was read by someone
