@@ -5,11 +5,12 @@ Pure JSON API. The React frontend (client-prod/) is served by nginx.
 import os
 import logging
 import smtplib
+import time
 import traceback
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -151,24 +152,84 @@ app.include_router(lms_router)  # LMS CRUD
 # CONTACT ENDPOINT
 # =============================================================================
 
-# Contact form delivery via ZeptoMail (transactional email — same service smtpit.py uses)
+# Where contact messages go, and who they appear to come from.
 CONTACT_TO = os.getenv("CONTACT_TO", "fleminganalytic@gmail.com")
 CONTACT_FROM = os.getenv("CONTACT_FROM", "noreply@fleminganalytic.com")
 ZEPTO_SERVER = os.getenv("ZEPTO_SERVER", "smtp.zeptomail.com")
 ZEPTO_PORT = int(os.getenv("ZEPTO_PORT", "587"))
 ZEPTO_USER = os.getenv("ZEPTO_USER", "emailapikey")
-ZEPTO_PWD = os.getenv("EMAIL_PWD", "REMOVED_SEE_ENV")
+
+# Mail settings, named for what they are.
+#
+# The ZEPTO_* names above are a fossil. A live ZeptoMail API key used to sit
+# in this file as a hardcoded default, and it was never once used: .env sets
+# ZEPTO_SERVER to smtp.gmail.com and ZEPTO_USER to a Gmail address, so every
+# message this site has ever sent went out through Gmail with an app
+# password. The key was doing nothing but waiting to be published, which is
+# eventually what happened.
+#
+# So: generic names, read from the environment, no defaults for the secret.
+# Moving to a different provider - Hostinger, say - is now an .env edit and a
+# restart, with nothing to change here:
+#
+#   SMTP_HOST=smtp.hostinger.com
+#   SMTP_PORT=587
+#   SMTP_USER=john.fleming@fleminganalytic.com
+#   SMTP_PASSWORD=<the mailbox password>
+#   CONTACT_FROM=john.fleming@fleminganalytic.com
+#
+# The old names are still honoured so that today's configuration keeps
+# working untouched until that edit is made.
+SMTP_HOST = os.getenv("SMTP_HOST") or os.getenv("ZEPTO_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT") or os.getenv("ZEPTO_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER") or os.getenv("ZEPTO_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD") or os.getenv("EMAIL_PWD")
+
+
+#: Recent submissions per client address, for the throttle below.
+_contact_hits: dict[str, list[float]] = {}
+CONTACT_WINDOW_SECONDS = 3600
+CONTACT_MAX_PER_WINDOW = 5
 
 
 @app.post("/contact", tags=["Contact"])
 async def receive_contact(
+    request: Request,
     page: str = Form(...),
     email: EmailStr = Form(...),
-    content: str = Form(...)
+    content: str = Form(...),
+    website: str = Form(""),
 ):
-    """Handle contact form submission — delivers via ZeptoMail."""
+    """Handle contact form submission — delivers via ZeptoMail.
+
+    This endpoint puts mail into a person's inbox from an unauthenticated
+    request, so it carries the two cheapest defences that actually work.
+
+    `website` is a honeypot: the form renders it hidden and a person never
+    fills it in, while most bots fill every field they find. A submission
+    that has it set is answered with the same success message a person gets,
+    because telling a bot it failed only teaches it to try again differently.
+    """
+    if website:
+        return {"status": "success", "message": "Email sent successfully"}
+
+    # Per-address rate limit. In-process and therefore per-worker, which is
+    # fine here because there is exactly one worker - see gunicorn_conf.py.
+    client = request.headers.get("x-real-ip") or (request.client.host if request.client else "unknown")
+    now = time.time()
+    recent = [t for t in _contact_hits.get(client, []) if now - t < CONTACT_WINDOW_SECONDS]
+    if len(recent) >= CONTACT_MAX_PER_WINDOW:
+        raise HTTPException(status_code=429, detail="Too many messages. Please try again later.")
+    recent.append(now)
+    _contact_hits[client] = recent
+
     if not email or not content:
         raise HTTPException(status_code=400, detail="Email and content are required.")
+
+    if not SMTP_PASSWORD:
+        # Say the actual cause in the log, and nothing useful to the caller.
+        logger.error("Contact form: SMTP_PASSWORD/EMAIL_PWD is not set, cannot send mail")
+        raise HTTPException(status_code=503, detail="Contact is temporarily unavailable.")
 
     try:
         msg = MIMEMultipart()
@@ -181,9 +242,9 @@ async def receive_contact(
             'plain'
         ))
 
-        with smtplib.SMTP(ZEPTO_SERVER, ZEPTO_PORT) as server:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
             server.starttls()
-            server.login(ZEPTO_USER, ZEPTO_PWD)
+            server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(CONTACT_FROM, [CONTACT_TO], msg.as_string())
 
         return {"status": "success", "message": "Email sent successfully"}
