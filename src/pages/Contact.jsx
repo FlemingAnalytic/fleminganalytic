@@ -80,8 +80,8 @@ export default function Contact() {
                         </h1>
                         <p style={{ fontSize: 15, lineHeight: 1.7, color: '#c3c2b7', marginBottom: 32 }}>
                             The job that eats a day a week. The report nobody trusts. The thing you'd
-                            hand to AI if you were willing to sign the result. One conversation, no
-                            charge, and you'll get a straight answer about whether this is worth doing.
+                            hand to AI tomorrow, if only you could be sure the answer was right. One
+                            conversation, no charge, and a straight answer about whether this is worth doing.
                         </p>
 
                         <form onSubmit={submit}>

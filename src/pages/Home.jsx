@@ -277,7 +277,7 @@ const Home = () => {
         <div className="footer-container">
             <div className="footer-main animate-in">
                 <div className="footer-cta">
-                    <h3>Bring us the one you wouldn't sign</h3>
+                    <h3>Bring us the job you can't afford to get wrong</h3>
                     <p style={{ color: '#94a3b8', fontSize: '1.15rem', marginBottom: '3rem', opacity: 0.75 }}>
                         The job that eats a day a week. The report nobody trusts. One conversation,
                         no charge, and a straight answer about whether this is worth doing.
