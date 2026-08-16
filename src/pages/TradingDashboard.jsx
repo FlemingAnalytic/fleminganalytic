@@ -10,8 +10,10 @@ const TradingDashboard = () => {
   const [marketStats, setMarketStats] = useState({
     sp500Data: null,
     recommendations: [],
-    loading: true
+    loading: true,
+    error: null,
   })
+  const hasData = Boolean(marketStats.sp500Data) && !marketStats.error
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,8 +30,16 @@ const TradingDashboard = () => {
           loading: false
         })
       } catch (err) {
+        // Say why. The upstream price feed is an unauthenticated scrape of
+        // Yahoo and goes down; the API now answers 503 with a sentence
+        // explaining that, and it is more use on screen than in a console.
         console.error('Failed to fetch market data:', err)
-        setMarketStats(prev => ({ ...prev, loading: false }))
+        setMarketStats(prev => ({
+          ...prev,
+          loading: false,
+          error: err?.response?.data?.detail
+            || 'Market data is unavailable right now. The rest of the page still works.',
+        }))
       }
     }
     fetchData()
@@ -54,10 +64,19 @@ const TradingDashboard = () => {
         </header>
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-20">
-            <StatsCard title="S&P 500 Performance" value="+12.4%" delta="+2.1% Today" icon={<TrendingUp size={24} color="#3b82f6" />} color="blue" />
-            <StatsCard title="Optimal Sharpe Ratio" value="1.82" delta="Historical Alpha" icon={<PieChart size={24} color="#8b5cf6" />} color="purple" />
-            <StatsCard title="Total Exposure" value="$84.2K" delta="Strategic Reserve" icon={<DollarSign size={24} color="#10b981" />} color="green" />
+            {/* These were three hardcoded numbers - +12.4%, 1.82, $84.2K - each
+                badged "Live". They were not live and never had been. Showing a
+                dash is worth more than showing a figure nobody computed. */}
+            <StatsCard title="S&P 500 Performance" value={fmt(marketStats.sp500Data?.performance)} delta="From the price feed" live={hasData} icon={<TrendingUp size={24} color="#3b82f6" />} color="blue" />
+            <StatsCard title="Optimal Sharpe Ratio" value={fmt(marketStats.sp500Data?.sharpe)} delta="Efficient frontier" live={hasData} icon={<PieChart size={24} color="#8b5cf6" />} color="purple" />
+            <StatsCard title="Recommendations" value={marketStats.loading ? '—' : String(marketStats.recommendations.length)} delta="Ranked today" live={hasData} icon={<DollarSign size={24} color="#10b981" />} color="green" />
         </section>
+
+        {marketStats.error && (
+          <div className="mb-12 px-6 py-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] text-amber-200/80 text-sm">
+            {marketStats.error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
             <motion.div 
@@ -127,11 +146,14 @@ const TradingDashboard = () => {
   )
 }
 
-const StatsCard = ({ title, value, delta, icon, color }) => (
+/** A dash means nobody computed it. Only real numbers get the Live badge. */
+const fmt = (v) => (v === null || v === undefined || v === '' ? '—' : String(v))
+
+const StatsCard = ({ title, value, delta, icon, color, live }) => (
   <div className={`glass-panel p-10 border-l-8 ${color === 'blue' ? 'border-blue-500/30' : color === 'purple' ? 'border-purple-500/30' : 'border-emerald-500/30'} bg-slate-900/40 transform hover:-translate-y-1 transition-all duration-300`}>
     <div className="flex justify-between items-start mb-8">
       <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center shadow-lg border border-white/5">{icon}</div>
-      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${color === 'blue' ? 'bg-blue-500/10 text-blue-400' : color === 'purple' ? 'bg-purple-500/10 text-purple-400' : 'bg-emerald-500/10 text-emerald-400'}`}>Live</span>
+      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${color === 'blue' ? 'bg-blue-500/10 text-blue-400' : color === 'purple' ? 'bg-purple-500/10 text-purple-400' : 'bg-emerald-500/10 text-emerald-400'}`}>{live ? 'Live' : 'No data'}</span>
     </div>
     <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2">{title}</p>
     <h4 className="text-4xl font-extrabold mb-1 tracking-tighter">{value}</h4>
