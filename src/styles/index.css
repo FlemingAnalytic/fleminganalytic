@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -28,11 +26,15 @@
   --glass-blur: blur(12px);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* No universal reset here on purpose.
+ *
+ * Tailwind's preflight already applies `box-sizing: border-box; margin: 0;
+ * padding: 0` to every element, and it does so inside `@layer base`. A
+ * second copy written here would be *unlayered*, and unlayered CSS wins
+ * against every cascade layer no matter what its specificity is - so a bare
+ * `* { padding: 0 }` silently defeated every padding and margin utility in
+ * the application. Classes were present in the markup and in the stylesheet,
+ * and computed to zero. */
 
 body {
   margin: 0;
@@ -87,4 +89,35 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+}
+
+/* --- Report canvas -------------------------------------------------------
+   Used by the analyst report. These were referenced as Tailwind classes in
+   several places without ever being defined - with an empty theme config,
+   `scrollbar-hide` and friends compiled to nothing at all, so the panes kept
+   their scrollbars and the animations never ran. Defining them here rather
+   than extending the Tailwind theme keeps them next to the other three
+   hand-written utilities this app already relies on. */
+
+.scrollbar-hide {
+  scrollbar-width: none;             /* Firefox */
+  -ms-overflow-style: none;          /* old Edge */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* A thread that crosses the top edge of a tile while it refetches. Deliberately
+   not a spinner over the content: the previous numbers stay readable and in
+   place, which is what makes cross-filtering feel immediate rather than
+   flickery. */
+@keyframes tileProgress {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* The report canvas overrides the body gradient - a chart surface has to be
+   flat for the palette to have been validated against it. */
+.report-root {
+  background: #050505;
 }
