@@ -45,7 +45,20 @@ raise at import time.
 
 Everything secret comes from the environment via `python-dotenv`; nothing is
 hardcoded. `.env` is not tracked and must not become tracked — it carries the
-database URL, the SMTP password and the FRED API key.
+database URL, the mailbox password and the FRED API key.
+
+`.env` is read once, at startup. Editing it changes nothing until the service
+restarts, which is easy to forget and looks exactly like the new value not
+working. After any change to the mail settings:
+
+```bash
+scripts/mailcheck.py            # test the credentials, then restart
+scripts/mailcheck.py --send     # ...and put a real message through
+scripts/mailcheck.py --dry-run  # test only, never restart
+```
+
+It authenticates *before* restarting, so a mistyped password is caught while
+the site is still running happily on the settings it already has.
 
 ## Sessions
 
