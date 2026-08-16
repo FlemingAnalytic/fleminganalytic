@@ -129,6 +129,14 @@ export default function Approach() {
                         One conversation, no charge, and a straight answer about whether this
                         is worth doing at all.
                     </p>
+                    <p style={{ marginTop: 22, fontSize: 12.5, color: '#7a7975' }}>
+                        Or take it with you:{' '}
+                        <a href="/pitch/fleming-analytic-onepager.pdf"
+                           style={{ color: '#3987e5', textDecoration: 'none', fontWeight: 600 }}>
+                            the one-page version (PDF)
+                        </a>
+                        .
+                    </p>
                 </div>
             </article>
         </div>
