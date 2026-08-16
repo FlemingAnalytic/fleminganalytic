@@ -171,7 +171,7 @@ def build_html() -> str:
 
   <div class="foot">
     <div class="ask">
-      <h2>Bring us the one you wouldn't sign.</h2>
+      <h2>Bring us the job you can't afford to get wrong.</h2>
       <p>The job that eats a day a week. The report nobody trusts. One conversation, no
       charge, and a straight answer about whether this is worth doing at all.</p>
       <div class="contact">fleminganalytic.com &nbsp;·&nbsp; john.fleming@fleminganalytic.com</div>
