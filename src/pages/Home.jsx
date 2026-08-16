@@ -97,13 +97,15 @@ const Home = () => {
             <span className="section-tag">Before you spend a dollar</span>
             <h2 className="section-title">Press the buttons yourself</h2>
             <p className="section-desc">
-                Nineteen working applications are on this site and you can open every one of
-                them without talking to anybody — a parish running its own bulletin, a
-                restaurant platform, an ICU dashboard, a ticketing site where fans pay what
-                the venue set and nothing else. Five more run on client and partner domains.
-                Each admin system ships with a manual whose screenshots come out of the
-                running software, so when the software changes the manual is re-run rather
-                than rewritten.
+                Eleven working applications run on this site and you can open every one of
+                them without talking to anybody — a parish running its own bulletin and
+                website, a restaurant platform, a chess engine that plays you, a
+                double-entry ledger, a machine-learning workbench you can load your own data
+                into. Alongside them are eight research reports and four data dashboards,
+                equally open. Three more applications run on client domains.
+                Two of the admin systems ship with a manual whose screenshots are captured
+                from the running software, so when the software changes the manual is re-run
+                rather than rewritten.
             </p>
             <p className="section-desc" style={{ marginTop: '1rem' }}>
                 Some of it was drafted by AI. That is rather the point — and every line of it
