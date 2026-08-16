@@ -42,7 +42,7 @@ export default function Contact() {
             setError(
                 err?.response?.status === 429
                     ? 'That is several messages in a short time. Try again in a little while.'
-                    : 'That did not send. Email fleminganalytic@gmail.com directly and it will reach the same place.'
+                    : 'That did not send. Email john.fleming@fleminganalytic.com directly and it will reach the same place.'
             );
         }
     };
@@ -128,7 +128,7 @@ export default function Contact() {
                         </form>
 
                         <p style={{ marginTop: 28, fontSize: 12.5, color: '#7a7975', lineHeight: 1.7 }}>
-                            Or email <span style={{ color: '#c3c2b7' }}>fleminganalytic@gmail.com</span> —
+                            Or email <span style={{ color: '#c3c2b7' }}>john.fleming@fleminganalytic.com</span> —
                             it reaches the same inbox.
                         </p>
                     </>
