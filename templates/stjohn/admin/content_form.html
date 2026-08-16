@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Content: {{ content_item.key }} - St. John Admin{% endblock %}
+
+{% block header %}Edit Site Content: {{ content_item.key }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <form action="/stjohn/admin/content/{{ content_item.id }}/edit" method="POST">
+        <div class="form-group">
+            <label>Section</label>
+            <input type="text" value="{{ content_item.section }}" readonly style="background: #111; color: #666;">
+        </div>
+
+        <div class="form-group">
+            <label for="title">Header / Title</label>
+            <input type="text" name="title" id="title" class="form-control" value="{{ content_item.title or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="content">Content (Rich Text)</label>
+            <textarea name="content" id="content" class="form-control wysiwyg" rows="10">{{ content_item.content or '' }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="image_url">Image URL</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" name="image_url" id="image_url" class="form-control" value="{{ content_item.image_url or '' }}">
+                    <button type="button" class="btn btn-secondary" onclick="openUploadModal('image_url')">Upload</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="link_url">Link URL / Action</label>
+                <input type="text" name="link_url" id="link_url" class="form-control" value="{{ content_item.link_url or '' }}">
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="/stjohn/admin/content" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

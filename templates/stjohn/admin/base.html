@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} | St. John CMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- SunEditor (Free/MIT Alternative to TinyMCE) -->
+    <link href="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/css/suneditor.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8a;
+            --secondary: #c9a227;
+            --accent: #8b2635;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #333;
+            --text-light: #666;
+            --bg: #fff;
+            --bg-alt: #f8f9fa;
+            --bg-dark: #1a1a2e;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
+            --radius: 8px;
+            --transition: 0.3s ease;
+            --sidebar-width: 260px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: var(--bg-alt);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Merriweather', serif;
+            color: var(--primary);
+            line-height: 1.3;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        a:hover {
+            color: var(--secondary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-brand h1 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-brand span {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all var(--transition);
+            font-size: 0.95rem;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left: 3px solid var(--secondary);
+        }
+
+        .sidebar-nav .material-icons {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        .sidebar-section {
+            margin-top: 1rem;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.4);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            background: var(--bg-alt);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+
+        .user-menu .material-icons {
+            color: var(--primary);
+        }
+
+        /* Content */
+        .content {
+            padding: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--bg-alt);
+        }
+
+        .card-title {
+            font-family: 'Merriweather', serif;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card .icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card .icon.blue { background: rgba(30, 58, 95, 0.1); color: var(--primary); }
+        .stat-card .icon.gold { background: rgba(201, 162, 39, 0.15); color: var(--secondary); }
+        .stat-card .icon.green { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .stat-card .icon.red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        .stat-card .value {
+            font-family: 'Merriweather', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card .label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all var(--transition);
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #d4ad2f;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+            color: var(--primary);
+        }
+
+        .btn-secondary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.875rem;
+            font-size: 0.8rem;
+        }
+
+        /* Tables */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table th {
+            background: var(--bg-alt);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+        }
+
+        .table tbody tr {
+            transition: background var(--transition);
+        }
+
+        .table tbody tr:hover {
+            background: var(--bg-alt);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            font-family: 'Open Sans', sans-serif;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-check input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--bg-alt);
+        }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: #059669; }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+        .badge-info { background: rgba(30, 58, 95, 0.1); color: var(--primary); }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .empty-state .material-icons {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: var(--gray-300);
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* API Box */
+        .api-endpoint {
+            font-family: monospace;
+            background: var(--bg-alt);
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform var(--transition);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h1>St. John Lutheran</h1>
+            <span>Content Management System</span>
+        </div>
+        <nav>
+            <ul class="sidebar-nav">
+                <li><a href="/stjohn/admin/" class="{% if request.url.path == '/stjohn/admin/' %}active{% endif %}">
+                    <span class="material-icons">dashboard</span> Dashboard
+                </a></li>
+            </ul>
+
+            <div class="sidebar-section">Content</div>
+            <ul class="sidebar-nav">
+                <li><a href="/stjohn/admin/home" class="{% if '/admin/home' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">home</span> Home Page Editor
+                </a></li>
+                <li><a href="/stjohn/admin/pages" class="{% if 'pages' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">article</span> Pages
+                </a></li>
+                <li><a href="/stjohn/admin/services" class="{% if 'services' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">church</span> Worship Services
+                </a></li>
+                <li><a href="/stjohn/admin/events" class="{% if 'events' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">event</span> Events & Sign Ups
+                </a></li>
+                <li><a href="/stjohn/admin/announcements" class="{% if 'announcements' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">campaign</span> Announcements
+                </a></li>
+                <li><a href="/stjohn/admin/ministries" class="{% if 'ministries' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">groups</span> Ministries
+                </a></li>
+                <li><a href="/stjohn/admin/content" class="{% if 'content' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">settings_suggest</span> Site Content
+                </a></li>
+            </ul>
+
+            <div class="sidebar-section">Settings</div>
+            <ul class="sidebar-nav">
+                <li><a href="/stjohn/admin/theme" class="{% if 'theme' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">palette</span> Liturgical Theme
+                </a></li>
+                <li><a href="/stjohn/admin/assets" class="{% if 'assets' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">collections</span> Asset Library
+                </a></li>
+                <li><a href="/stjohn/admin/navigation" class="{% if 'navigation' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">menu</span> Navigation Links
+                </a></li>
+                <li><a href="/stjohn/admin/contact" class="{% if 'contact' in request.url.path %}active{% endif %}">
+                    <span class="material-icons">contact_phone</span> Contact Info
+                </a></li>
+            </ul>
+
+            <div class="sidebar-section">Preview</div>
+            <ul class="sidebar-nav">
+                <li><a href="/stjohn/" target="_blank">
+                    <span class="material-icons">visibility</span> View Public Site
+                </a></li>
+            </ul>
+
+            <div class="sidebar-section">Account</div>
+            <ul class="sidebar-nav">
+                <li><a href="/stjohn/admin/logout">
+                    <span class="material-icons">logout</span> Sign Out
+                </a></li>
+            </ul>
+
+            <div style="padding: 1.5rem; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button onclick="toggleUploadModal()" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">
+                    <span class="material-icons">cloud_upload</span> Upload File
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <div id="uploadModal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div class="card" style="width: 400px; max-width: 90%;">
+            <div class="card-header">
+                <h3 class="card-title">Upload Image or PDF</h3>
+                <span class="material-icons" style="cursor:pointer;" onclick="toggleUploadModal()">close</span>
+            </div>
+            <div style="padding: 1.5rem;">
+                <input type="file" id="modalFileUpload" class="form-control" style="margin-bottom: 1rem;">
+                <div id="uploadResult" style="margin-bottom: 1rem; display:none;">
+                    <label>File URL:</label>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="text" id="uploadedUrl" class="form-control" readonly>
+                        <button onclick="copyUploadedUrl()" class="btn btn-secondary btn-sm">Copy</button>
+                        <div id="compressionInfo" style="margin-top: 0.75rem; padding: 0.75rem; background: #f0f9ff; border-left: 3px solid #0ea5e9; border-radius: 4px; display: none;">
+                            <small style="color: #0c4a6e; font-weight: 500;">
+                                <span class="material-icons" style="font-size: 1rem; vertical-align: middle;">info</span>
+                                <span id="compressionMsg"></span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <button id="modalUploadBtn" onclick="handleModalUpload()" class="btn btn-primary" style="width:100%; justify-content:center;">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Picker Modal -->
+    <div id="assetPickerModal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div class="card" style="width: 600px; max-width: 90%; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="card-header">
+                <h3 class="card-title">Select Asset</h3>
+                <span class="material-icons" style="cursor:pointer;" onclick="closeAssetPicker()">close</span>
+            </div>
+            <div style="padding: 1.5rem; overflow-y: auto; flex: 1;" id="assetPickerContent">
+                <p>Loading assets...</p>
+            </div>
+        </div>
+    </div>
+
+    <main class="main">
+        <header class="header">
+            <h2>{% block page_title %}Dashboard{% endblock %}</h2>
+            <div class="header-actions">
+                {% block header_actions %}{% endblock %}
+                <div class="user-menu">
+                    <span class="material-icons">account_circle</span>
+                    <span>{{ user.name or user.username }}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- SunEditor -->
+    <script src="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/suneditor.min.js"></script>
+    <script>
+      let targetInputId = null;
+      const editors = {};
+
+      function toggleUploadModal() {
+        const modal = document.getElementById('uploadModal');
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        document.getElementById('uploadResult').style.display = 'none';
+        document.getElementById('modalFileUpload').value = '';
+        if (modal.style.display === 'none') targetInputId = null;
+      }
+
+      function openUploadModal(inputId) {
+        targetInputId = inputId;
+        toggleUploadModal();
+      }
+
+      function handleModalUpload() {
+        const fileInput = document.getElementById('modalFileUpload');
+        const btn = document.getElementById('modalUploadBtn');
+        const result = document.getElementById('uploadResult');
+        const urlInput = document.getElementById('uploadedUrl');
+
+        if (!fileInput.files[0]) return alert('Please select a file');
+
+        btn.disabled = true;
+        btn.innerText = 'Uploading...';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        fetch('/stjohn/admin/upload', {
+          method: 'POST',
+          body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.location) {
+            urlInput.value = data.location;
+            result.style.display = 'block';
+            btn.innerText = 'Upload Successful!';
+            
+            // Show compression info if file was compressed
+            const compressionInfo = document.getElementById('compressionInfo');
+            const compressionMsg = document.getElementById('compressionMsg');
+            if (data.result && data.result[0] && data.result[0].compression_msg) {
+                compressionMsg.textContent = data.result[0].compression_msg;
+                compressionInfo.style.display = 'block';
+            }
+            
+            if (targetInputId) {
+                const target = document.getElementById(targetInputId);
+                if (target) {
+                    target.value = data.location;
+                    setTimeout(() => toggleUploadModal(), 1000);
+                }
+            }
+          } else {
+            alert('Upload failed');
+            btn.disabled = false;
+            btn.innerText = 'Upload';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Error uploading file');
+          btn.disabled = false;
+          btn.innerText = 'Upload';
+        });
+      }
+
+      function copyUploadedUrl() {
+        const urlInput = document.getElementById('uploadedUrl');
+        urlInput.select();
+        document.execCommand('copy');
+        alert('URL copied to clipboard: ' + urlInput.value);
+      }
+
+      let assetPickerTargetId = null;
+
+      function openAssetPicker(targetInputId) {
+        assetPickerTargetId = targetInputId;
+        const modal = document.getElementById('assetPickerModal');
+        modal.style.display = 'flex';
+        loadAssetPicker();
+      }
+
+      function closeAssetPicker() {
+        const modal = document.getElementById('assetPickerModal');
+        modal.style.display = 'none';
+        assetPickerTargetId = null;
+      }
+
+      function loadAssetPicker() {
+        const content = document.getElementById('assetPickerContent');
+        
+        fetch('/stjohn/admin/api/assets')
+          .then(r => r.json())
+          .then(data => {
+            if (data.assets && data.assets.length > 0) {
+              let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">';
+              data.assets.forEach(asset => {
+                let thumb = asset.type === 'image' ? `<img src="${asset.url}" style="width: 100%; height: 100px; object-fit: cover;">` : `<div style="width: 100%; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center;"><span class="material-icons">description</span></div>`;
+                html += `
+                <div style="cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; transition: all 0.2s;" 
+                     onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-lg)'"
+                     onmouseout="this.style.borderColor=''; this.style.boxShadow=''"
+                     onclick="selectAsset('` + asset.url + `', '` + asset.filename + `')">
+                  ${thumb}
+                  <div style="padding: 0.5rem; background: white; font-size: 0.75rem; text-align: center; word-break: break-all;">
+                    ${asset.filename}
+                  </div>
+                </div>`;
+              });
+              html += '</div>';
+              content.innerHTML = html;
+            } else {
+              content.innerHTML = '<p style="text-align: center; color: var(--text-light);">No assets found. Upload some images or PDFs first.</p>';
+            }
+          })
+          .catch(err => {
+            content.innerHTML = '<p style="color: red;">Error loading assets</p>';
+            console.error(err);
+          });
+      }
+
+      function selectAsset(url, filename) {
+        if (assetPickerTargetId) {
+          const target = document.getElementById(assetPickerTargetId);
+          if (target) {
+            target.value = url;
+            target.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+        closeAssetPicker();
+      }
+
+      // Initialize SunEditor for all textareas with class 'wysiwyg'
+      function initSunEditors() {
+        document.querySelectorAll('textarea.wysiwyg').forEach(el => {
+            const id = el.id || 'editor_' + Math.random().toString(36).substr(2, 9);
+            if (!el.id) el.id = id;
+            
+            // Skip if already initialized
+            if (editors[id]) return;
+
+            editors[id] = SUNEDITOR.create(id, {
+                buttonList: [
+                    ['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
+                    ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                    ['fontColor', 'hiliteColor', 'textStyle', 'removeFormat'],
+                    ['outdent', 'indent', 'align', 'horizontalRule', 'list', 'lineHeight'],
+                    ['table', 'link', 'image', 'video'],
+                    ['fullScreen', 'showBlocks', 'codeView', 'preview']
+                ],
+                height: 'auto',
+                minHeight: '200px',
+                width: '100%',
+                imageUploadUrl: '/stjohn/admin/upload',
+                placeholder: 'Start typing...',
+                attributesWhitelist: { all: "*" }
+            });
+
+            // Keep textarea in sync for traditional form posts
+            el.form?.addEventListener('submit', () => {
+                el.value = editors[id].getContents();
+            });
+        });
+      }
+
+      window.addEventListener('load', initSunEditors);
+    </script>
+</body>
+</html>

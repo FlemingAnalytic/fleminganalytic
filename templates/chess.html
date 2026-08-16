@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Whisperer</title>
+    <link rel="stylesheet" href="/static/css/chess.css?v=17">
+    <!-- Explicit favicon to avoid /favicon.ico 404s -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="64x64" href="/static/king-64.png">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♔ Chess Whisperer ♛</h1>
+
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="play">Play vs AI</button>
+                <button class="tab-btn" data-tab="watch">Watch Master Games</button>
+            </div>
+
+            <!-- Play vs AI Controls -->
+            <div class="game-info" id="play-controls">
+                <div class="player-info">
+                    <span id="current-player">White to move</span>
+                    <span id="game-status"></span>
+                </div>
+                <div class="controls">
+                    <button id="new-game-btn">New Game</button>
+                    <button id="hint-btn">Get Hint</button>
+                    <select id="difficulty-select">
+                        <option value="1">Easy (1)</option>
+                        <option value="2">Medium (2)</option>
+                        <option value="3">Hard (3)</option>
+                        <option value="4">Expert (4)</option>
+                        <option value="5">Master (5)</option>
+                    </select>
+                    <select id="player-color-select">
+                        <option value="white">Play as White</option>
+                        <option value="black">Play as Black</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Games Selection Accordion (Watch Mode) -->
+            <div id="games-accordion" class="games-accordion hidden">
+                <!-- Collapsible toggle button -->
+                <button class="accordion-toggle" id="games-accordion-toggle">
+                    <span id="accordion-title">Select a Game</span>
+                    <span id="accordion-arrow">▼</span>
+                </button>
+
+                <!-- Everything inside this collapses -->
+                <div class="accordion-content" id="games-accordion-content">
+                    <!-- Filter at top of collapsible content -->
+                    <div class="game-filters-header">
+                        <label>Filter by Player:</label>
+                        <select id="player-filter">
+                            <option value="all">All Players</option>
+                        </select>
+                        <label>Filter by ELO:</label>
+                        <select id="elo-filter">
+                            <option value="all">All ELO Ranges</option>
+                            <option value="0-2000">0-2000</option>
+                            <option value="2000-2200">2000-2200</option>
+                            <option value="2200-2400">2200-2400</option>
+                            <option value="2400-2600">2400-2600</option>
+                            <option value="2600-2800">2600-2800</option>
+                            <option value="2800-3000">2800-3000</option>
+                            <option value="3000-3200">3000-3200</option>
+                            <option value="3200-3400">3200-3400</option>
+                            <option value="3400-3600">3400-3600</option>
+                            <option value="3600+">3600+</option>
+                        </select>
+                        <span id="games-count-inline"></span>
+                    </div>
+
+                    <!-- Games list -->
+                    <div id="games-dropdown-list" class="games-dropdown-list"></div>
+
+                    <!-- Control buttons INSIDE accordion -->
+                    <div class="replay-controls-in-accordion">
+                        <button id="play-pause-btn" disabled>▶ Play</button>
+                        <button id="prev-move-btn" disabled>⏮ Prev</button>
+                        <button id="next-move-btn" disabled>⏭ Next</button>
+                        <button id="reset-game-btn" disabled>⏪ Reset</button>
+                        <div class="speed-control">
+                            <label>Speed:</label>
+                            <label><input type="radio" name="replay-speed" value="5" checked> 5s</label>
+                            <label><input type="radio" name="replay-speed" value="10"> 10s</label>
+                            <label><input type="radio" name="replay-speed" value="15"> 15s</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-container">
+                <div class="board-container">
+                    <div id="chess-board" class="chess-board">
+                        <!-- Board squares will be generated by JavaScript -->
+                    </div>
+                    <div class="coordinates">
+                        <div class="files">
+                            <span>a</span><span>b</span><span>c</span><span>d</span>
+                            <span>e</span><span>f</span><span>g</span><span>h</span>
+                        </div>
+                        <div class="ranks">
+                            <span>8</span><span>7</span><span>6</span><span>5</span>
+                            <span>4</span><span>3</span><span>2</span><span>1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <!-- Current Game Info (Watch Mode) -->
+                    <div id="current-game-info" class="current-game-info hidden">
+                        <strong id="game-title"></strong>
+                        <div id="game-details"></div>
+                        <div id="replay-progress"></div>
+                    </div>
+
+                    <!-- Move History (Both Modes) -->
+                    <div class="move-history" id="move-history-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="margin: 0;">Move History</h3>
+                            <button id="copy-moves-btn" title="Copy move history to clipboard" style="background: transparent; border: none; cursor: pointer; font-size: 1.2em; padding: 5px; color: #3498db;">
+                                📋
+                            </button>
+                        </div>
+                        <div id="moves-list"></div>
+                    </div>
+
+                    <!-- Captured Pieces (Play Mode Only) -->
+                    <div id="captured-pieces-container" class="captured-pieces">
+                        <h3>Captured Pieces</h3>
+                        <div class="captured-white">
+                            <span>White: </span>
+                            <div id="captured-white-pieces"></div>
+                        </div>
+                        <div class="captured-black">
+                            <span>Black: </span>
+                            <div id="captured-black-pieces"></div>
+                        </div>
+                    </div>
+
+                    <!-- Game Actions (Play Mode) -->
+                    <div class="game-actions" id="play-actions">
+                        <button id="undo-btn" disabled>Undo Move</button>
+                        <button id="resign-btn">Resign</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Promotion Modal -->
+    <div id="promotion-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Choose Promotion Piece</h3>
+            <div class="promotion-pieces">
+                <button class="promotion-piece" data-piece="q">♕</button>
+                <button class="promotion-piece" data-piece="r">♖</button>
+                <button class="promotion-piece" data-piece="b">♗</button>
+                <button class="promotion-piece" data-piece="n">♘</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/static/js/chess.js?v=33"></script>
+</body>
+</html>

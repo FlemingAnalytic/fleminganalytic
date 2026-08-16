@@ -1,0 +1,14 @@
+#todoApp {
+    width: 300px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  #addTodoButton {
+    margin-top: 10px;
+  }
+  
+  .todo-item {
+    margin-top: 10px;
+  }
+  

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="Description" content="Swing Trading Model" />
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+
+  <link href="{{ url_for('static', path='/css/swinger.css') }}" rel="stylesheet">
+
+
+  <title>Swing Trading Monitor</title>
+
+  </style>
+
+
+</head>
+
+<body class="container">
+<h5 class="icon-blue text-center">
+  <img src="{{url_for('static',path='/img/fleminganalytic.png') }}" width='50px' height='auto'> Fleming Analytic Resources
+</h5>
+  <h3>Swing Status</h3>
+  <p class="icon-red">Disclaimer: This site is for entertainment purposes only. Investing is astrology. You are unlikely to profit. Trade as close to the end of the day as apossible.</p>
+  <div id="watchlist">
+    <h5>Buy Candidates</h5>
+    <div id="candidates" class="container"></div>
+  </div>
+  <hr />
+  <h5>Watchlist</h5>
+  <div id="todoApp">
+    <input id="todoInput" type="text" placeholder="Add new ticker" />
+    <button id="addTodoButton">Add Ticker</button>
+    <div id="todoList" class="todoList">
+      <div class="row">
+        <div class="col text-center"><b>Ticker</b></div>
+        <div class="col text-center"><b>Status</b></div>
+        <div class="col text-center"><b>Price</b></div>
+        <div class="col text-center"><b>SMA5</b></div>
+        <div class="col"></div>
+        <div class="col"></div>
+      </div>
+    </div>
+    
+    <div id="chart">
+
+    </div>
+    
+  </div>
+  <footer class="text-center"><i class="bi bi-copyright" aria-hidden="true">&copy;2023, <a href="mailto:fleminganalytic@gmail.com">Fleming Analytic Resources, Inc.</a>. All rights reserved.</i></footer>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="{{ url_for('static', path='/js/swinger.js') }}"></script>
+</body>
+
+</html>

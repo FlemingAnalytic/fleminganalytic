@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{% if ministry %}Edit{% else %}New{% endif %} Ministry{% endblock %}
+{% block page_title %}{% if ministry %}Edit{% else %}New{% endif %} Ministry{% endblock %}
+
+{% block content %}
+<div class="card">
+    <form method="POST" action="/stjohn/admin/ministries/{% if ministry %}{{ ministry.id }}/edit{% else %}new{% endif %}">
+        <div class="form-group">
+            <label for="name">Ministry Name *</label>
+            <input type="text" id="name" name="name" class="form-control"
+                   value="{{ ministry.name if ministry else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description (HTML Content)</label>
+            <textarea id="description" name="description" class="form-control wysiwyg">{{ ministry.description if ministry else '' }}</textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="icon">Icon Name</label>
+                <input type="text" id="icon" name="icon" class="form-control"
+                       value="{{ ministry.icon if ministry else '' }}"
+                       placeholder="school, restaurant, music_note, groups, favorite">
+                <small style="color: #6b7280;">
+                    <a href="https://fonts.google.com/icons" target="_blank">Browse Material Icons</a>
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="sort_order">Sort Order</label>
+                <input type="number" id="sort_order" name="sort_order" class="form-control"
+                       value="{{ ministry.sort_order if ministry else 0 }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="image_url">Image URL</label>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="url" id="image_url" name="image_url" class="form-control"
+                       value="{{ ministry.image_url if ministry else '' }}">
+                <button type="button" class="btn btn-secondary" onclick="openUploadModal('image_url')">Upload</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="page_url">Ministry Page URL</label>
+            <input type="url" id="page_url" name="page_url" class="form-control"
+                   value="{{ ministry.page_url if ministry else '' }}"
+                   placeholder="https://stjohnjoliet.org/ministry/...">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contact_name">Contact Person</label>
+                <input type="text" id="contact_name" name="contact_name" class="form-control"
+                       value="{{ ministry.contact_name if ministry else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="contact_email">Contact Email</label>
+                <input type="email" id="contact_email" name="contact_email" class="form-control"
+                       value="{{ ministry.contact_email if ministry else '' }}">
+            </div>
+        </div>
+
+        {% if ministry %}
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" id="is_active" name="is_active" value="true"
+                       {% if ministry.is_active %}checked{% endif %}>
+                <label for="is_active">Active (visible on site)</label>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% if ministry %}Update{% else %}Create{% endif %} Ministry
+            </button>
+            <a href="/stjohn/admin/ministries" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

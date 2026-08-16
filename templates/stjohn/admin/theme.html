@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Liturgical Theme{% endblock %}
+{% block page_title %}Liturgical Season Theme{% endblock %}
+
+{% block content %}
+<style>
+    .season-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.25rem;
+    }
+    .season-card {
+        border: 3px solid var(--gray-200);
+        border-radius: var(--radius);
+        overflow: hidden;
+        cursor: pointer;
+        transition: all var(--transition);
+        position: relative;
+    }
+    .season-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+    .season-card.active {
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 2px var(--secondary);
+    }
+    .season-card.active::after {
+        content: 'check_circle';
+        font-family: 'Material Icons';
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 1.5rem;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .season-preview {
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    .season-preview .material-icons {
+        font-size: 2.5rem;
+        opacity: 0.9;
+    }
+    .season-info {
+        padding: 1rem;
+        text-align: center;
+    }
+    .season-info h4 {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+    .season-info small {
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+    .season-colors {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+    .season-colors span {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Choose Liturgical Season</h3>
+    </div>
+    <p style="color: var(--text-light); margin-bottom: 1.5rem;">
+        Select the current liturgical season to update the public site's color scheme. The admin interface stays the same.
+    </p>
+
+    <form method="POST" action="/stjohn/admin/theme" id="themeForm">
+        <input type="hidden" name="season" id="seasonInput" value="{{ current_season }}">
+
+        <div class="season-grid">
+            <!-- Default / Ordinary Time -->
+            <div class="season-card {{ 'active' if current_season == 'default' }}" onclick="selectSeason('default')">
+                <div class="season-preview" style="background: linear-gradient(135deg, #1e3a5f, #2d5a8a);">
+                    <span class="material-icons">brightness_5</span>
+                </div>
+                <div class="season-info">
+                    <h4>Ordinary Time</h4>
+                    <small>Default theme</small>
+                    <div class="season-colors">
+                        <span style="background:#1e3a5f;"></span>
+                        <span style="background:#c9a227;"></span>
+                        <span style="background:#2d5a8a;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advent -->
+            <div class="season-card {{ 'active' if current_season == 'advent' }}" onclick="selectSeason('advent')">
+                <div class="season-preview" style="background: linear-gradient(135deg, #2e1065, #4a1a8a);">
+                    <span class="material-icons">dark_mode</span>
+                </div>
+                <div class="season-info">
+                    <h4>Advent</h4>
+                    <small>Hope &amp; preparation</small>
+                    <div class="season-colors">
+                        <span style="background:#2e1065;"></span>
+                        <span style="background:#c9a227;"></span>
+                        <span style="background:#4a1a8a;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Christmas -->
+            <div class="season-card {{ 'active' if current_season == 'christmas' }}" onclick="selectSeason('christmas')">
+                <div class="season-preview" style="background: linear-gradient(135deg, #1a472a, #2d6a4f);">
+                    <span class="material-icons">star</span>
+                </div>
+                <div class="season-info">
+                    <h4>Christmas</h4>
+                    <small>Joy &amp; celebration</small>
+                    <div class="season-colors">
+                        <span style="background:#1a472a;"></span>
+                        <span style="background:#d4af37;"></span>
+                        <span style="background:#8b0000;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Epiphany -->
+            <div class="season-card {{ 'active' if current_season == 'epiphany' }}" onclick="selectSeason('epiphany')">
+                <div class="season-preview" style="background: linear-gradient(135deg, #1a5276, #2e86c1);">
+                    <span class="material-icons">light_mode</span>
+                </div>
+                <div class="season-info">
+                    <h4>Epiphany</h4>
+                    <small>Revelation &amp; light</small>
+                    <div class="season-colors">
+                        <span style="background:#1a5276;"></span>
+                        <span style="background:#d4af37;"></span>
+                        <span style="background:#2e86c1;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lent -->
+            <div class="season-card {{ 'active' if current_season == 'lent' }}" onclick="selectSeason('lent')">
+                <div class="season-preview" style="background: linear-gradient(135deg, #3d1551, #5b2378);">
+                    <span class="material-icons">water_drop</span>
+                </div>
+                <div class="season-info">
+                    <h4>Lent</h4>
+                    <small>Reflection &amp; repentance</small>
+                    <div class="season-colors">
+                        <span style="background:#3d1551;"></span>
+                        <span style="background:#9e8a5e;"></span>
+                        <span style="background:#5b2378;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Easter -->
+            <div class="season-card {{ 'active' if current_season == 'easter' }}" onclick="selectSeason('easter')">
+                <div class="season-preview" style="background: linear-gradient(135deg, #1a5276, #2980b9);">
+                    <span class="material-icons">local_florist</span>
+                </div>
+                <div class="season-info">
+                    <h4>Easter</h4>
+                    <small>Resurrection &amp; new life</small>
+                    <div class="season-colors">
+                        <span style="background:#1a5276;"></span>
+                        <span style="background:#d4af37;"></span>
+                        <span style="background:#f0f0f0; border-color:#ccc;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pentecost -->
+            <div class="season-card {{ 'active' if current_season == 'pentecost' }}" onclick="selectSeason('pentecost')">
+                <div class="season-preview" style="background: linear-gradient(135deg, #8b1a1a, #c0392b);">
+                    <span class="material-icons">local_fire_department</span>
+                </div>
+                <div class="season-info">
+                    <h4>Pentecost</h4>
+                    <small>Spirit &amp; fire</small>
+                    <div class="season-colors">
+                        <span style="background:#8b1a1a;"></span>
+                        <span style="background:#d4af37;"></span>
+                        <span style="background:#c0392b;"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <span class="material-icons">save</span> Apply Theme
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function selectSeason(season) {
+    document.getElementById('seasonInput').value = season;
+    document.querySelectorAll('.season-card').forEach(c => c.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+</script>
+{% endblock %}

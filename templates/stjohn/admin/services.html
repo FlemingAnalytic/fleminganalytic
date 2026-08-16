@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Worship Services{% endblock %}
+{% block page_title %}Worship Services{% endblock %}
+
+{% block header_actions %}
+<a href="/stjohn/admin/services/new" class="btn btn-primary">
+    <span class="material-icons">add</span> Add Service
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    {% if services %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>Time</th>
+                <th>Name</th>
+                <th>Livestream</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for service in services %}
+            <tr>
+                <td>{{ service.day }}</td>
+                <td><strong>{{ service.time }}</strong></td>
+                <td>{{ service.name or '-' }}</td>
+                <td>
+                    {% if service.livestream %}
+                    <span class="badge badge-success">Yes</span>
+                    {% else %}
+                    <span class="badge badge-secondary">No</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if service.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-warning">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <a href="/stjohn/admin/services/{{ service.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
+                    <form method="POST" action="/stjohn/admin/services/{{ service.id }}/delete" style="display:inline;"
+                          onsubmit="return confirm('Delete this service?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons">church</span>
+        <p>No worship services yet.</p>
+        <a href="/stjohn/admin/services/new" class="btn btn-primary">Add First Service</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

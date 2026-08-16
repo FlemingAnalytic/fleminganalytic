@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="Description" content="Enter your description here" />
+
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+
+  <title>Swing Trading Monitor</title>
+  <style>
+    #todoApp {
+      width: auto;
+      margin: 10 auto;
+      padding: 20px;
+    }
+
+    #addTodoButton {
+      margin-top: 10px;
+    }
+
+    .todo-item {
+      margin-top: 10px;
+    }
+
+    #todoList {
+      margin: 10px;
+      width: 90%;
+      padding: 2px;
+    }
+  </style>
+
+
+</head>
+
+<body class="container">
+
+  <h3>Swing Status</h3>
+  <div id="watchlist">
+    <h5>Watchlist</h5>
+    <div id="candidates"></div>
+  </div>
+  <div id="todoApp">
+    <input id="todoInput" type="text" placeholder="Add new ticker" />
+    <button id="addTodoButton">Add Ticker</button>
+    <div id="todoList" class="todoList">
+    <div class="row">
+      <div class="col">Ticker</div>
+      <div class="col">Status</div>
+      <div class="col">Price</div>
+      <div class="col"></div>
+    </div>
+  </div>
+  </div>
+  <script>
+
+    // Get the elements from HTML
+    const todoInput = document.getElementById('todoInput');
+    const addTodoButton = document.getElementById('addTodoButton');
+    const todoList = document.getElementById('todoList');
+    
+
+    function convertDate() {
+      a = Date()
+      b = a.split(" ")[4]
+      c = b.split(":")
+      c[0] = c[0] > 12 ? c[0] - 12 : c[0]
+      tim = c[0] + ":" + c[1]
+      return tim
+    }
+
+    function refreshDiv(myDiv,content) {
+      var div = document.getElementById(myDiv);
+      // Fade out the div
+      div.style.opacity = 0;
+  
+      // Wait for the transition to finish, then change the content and fade in
+      setTimeout(function() {
+      div.innerHTML = content; // change the content
+      div.style.opacity = 1; // fade in
+      }, 800); // this delay should be the same as the transition duration in the CSS
+      }
+
+    function getStatus(tick) {
+      const url = "https://fleminganalytic.com/swing/status/" + tick
+      let resp = ""
+      fetch(url, {
+        mode: 'cors', headers: {
+          'Access-Control-Allow-Origin': '*'
+        }
+      })
+        .then(ret => ret.json())
+        .then(data => {
+          data = (JSON.parse(data))
+          console.log(data)
+          sta = data["data"][0]['flag']
+          try {
+            //rec = document.getElementById(tick + "_c2")
+            //rec.innerHTML = sta
+            refreshDiv(tick+'_c2',sta)
+            //rec = document.getElementById(tick + "_c3")
+            //tim = convertDate()
+            //rec.innerHTML = tim
+            refreshDiv(tick+'_c3',data["data"][0]['close'].toFixed(2))
+            setTimeout(getStatus, 30000, tick)
+          }
+          catch (e) {
+            console.log(e)
+          }
+
+        })
+
+    }
+
+
+    // Function to add a new todo item
+    function addTodo() {
+      const todoText = todoInput.value;
+
+      let row = document.createElement('div');
+
+      let col1 = document.createElement('div');
+      let col2 = document.createElement('div');
+      let col3 = document.createElement('div');
+      let col4 = document.createElement('div')
+
+      
+      
+      row.classList.add('row');
+      row.classList.add("todo-item")
+      row.id = todoText;
+
+      col1.id = todoText + "_c1";
+      col2.id = todoText + "_c2";
+      col3.id = todoText + "_c3"
+      col4.id = todoText + "_c4"
+
+      col1.classList.add('col');
+      col2.classList.add('col');
+      col3.classList.add('col');
+      col4.classList.add('col');
+
+
+
+      col1.innerText = todoText.toUpperCase();
+      col1.style.fontWeight = 'bold';
+
+      col4.innerText = 'Delete';
+      col4.classList.add('btn');
+      col4.classList.add('btn-sm');
+      col4.classList.add('btn-danger');
+      col4.addEventListener('click', function () {
+        todoList.removeChild(row);
+      });
+
+
+      row.appendChild(col1);
+      row.appendChild(col2);
+      row.appendChild(col3);
+      row.appendChild(col4)
+      // Add the new todo item to the list
+
+      todoList.appendChild(row);
+
+      console.log('going to getStatus ', todoText)
+      setTimeout(getStatus, 100, todoText)
+      // Clear the input box
+      todoInput.value = '';
+    }
+
+    // Add event listener for the add button
+    addTodoButton.addEventListener('click', addTodo);
+
+    function getbuys() {
+      const url = "https://fleminganalytic.com/swing/buys"
+      let resp = ""
+      fetch(url, {
+        mode: 'no-cors', headers: {
+          'Access-Control-Allow-Origin': '*'
+        }
+      })
+        .then(ret => ret.json())
+        .then(data => {
+          data = (JSON.parse(data))
+          try {
+            x = data["data"]
+            const candidates = document.getElementById('candidates');
+            candidates.innerHTML = ""
+            row = document.createElement('div');
+            row.classList.add('row');
+            row.classList.add("todo-item")
+            
+            h1 = document.createElement('div');
+            h1.classList.add('col');
+            h1.innerText = "Ticker"
+            h1.style.fontWeight = 'bold';
+            h2 = document.createElement('div');
+            h2.innerText = "Name"
+            h2.classList.add('col');
+            h2.style.fontWeight = 'bold';
+            h3 = document.createElement('div');
+            h3.innerText = "Count"
+            h3.classList.add('col');
+            h3.classList.add('align-center');
+            h3.style.fontWeight = 'bold';
+
+            h4 = document.createElement('div');
+            h4.innerText = "AvgRet"
+            h4.classList.add('col');
+            h4.classList.add('align-right');
+            h4.style.fontWeight = 'bold';
+            h5 = document.createElement('div');
+            h5.innerText = "Stdev"
+            h5.style.fontWeight = 'bold';
+            h5.classList.add('col');
+            h5.classList.add('align-right');
+            row.appendChild(h1);
+            row.appendChild(h2);
+            row.appendChild(h3);
+            row.appendChild(h4);
+            row.appendChild(h5);
+
+            candidates.appendChild(row);
+
+            for (i = 0; i < x.length; i++) {
+              row = document.createElement('div');
+           row.classList.add('row');
+            row.classList.add("todo-item")
+              tick = x[i]['tick']
+              name = x[i]['name'].substring(0, 10)
+              count = x[i]['count']
+              avgret = x[i]['avgret']
+              stdev = x[i]['stdev']
+
+              col1 = document.createElement('div');
+              col2 = document.createElement('div');
+              col3 = document.createElement('div');
+              col4 = document.createElement('div');
+              col5 = document.createElement('div');
+
+              col1.classList.add('col');
+              col2.classList.add('col');
+              col3.classList.add('col');
+              col3.classList.add('align-center');
+              col4.classList.add('col');
+              col4.classList.add('align-right');
+              col5.classList.add('col');
+              col5.classList.add('align-right');
+
+              col1.innerText = tick.toUpperCase();
+              col1.style.fontWeight = 'bold';
+              col2.innerText = name;
+              col3.innerText = count;
+              col4.innerText = avgret;
+              col5.innerText = stdev;
+
+              row.appendChild(col1);
+              row.appendChild(col2);
+              row.appendChild(col3);
+              row.appendChild(col4)
+              row.appendChild(col5)
+              candidates.appendChild(row);
+
+           }
+
+
+          }
+          catch (e) {
+            console.log(e)
+          }
+
+        })        
+
+
+    }
+
+    getbuys()
+    setInterval(getbuys, 3600000)
+  </script>
+
+
+</body>
+
+</html>

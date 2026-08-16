@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }} | St. John Lutheran Church</title>
+    <meta name="description" content="{{ page.meta_description or page.subtitle or 'St. John Lutheran Church - Joliet, IL' }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8a;
+            --secondary: #c9a227;
+            --accent: #8b2635;
+            --text: #333;
+            --text-light: #666;
+            --bg: #fff;
+            --bg-alt: #f8f9fa;
+            --bg-dark: #1a1a2e;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
+            --radius: 8px;
+            --transition: 0.3s ease;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Merriweather', serif;
+            line-height: 1.3;
+            color: var(--primary);
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        a:hover { color: var(--secondary); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.98);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Merriweather', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-logo svg {
+            width: 40px;
+            height: 40px;
+            fill: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .nav-links a:hover { color: var(--secondary); }
+
+        /* Dropdown Styles */
+        .nav-links li { position: relative; }
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #fff;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+            padding: 0.5rem 0;
+            list-style: none;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+        .dropdown li a {
+            padding: 0.75rem 1.5rem;
+            color: var(--text-dark);
+            display: block;
+            font-size: 0.9rem;
+        }
+        .dropdown li a:hover {
+            background: #f8f9fa;
+            color: var(--primary);
+        }
+        .nav-links li:hover .dropdown { display: block; }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .nav-toggle span {
+            width: 25px;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        /* Page Hero */
+        .page-hero {
+            padding: 8rem 0 4rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+
+        .page-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>') repeat;
+            background-size: 100px;
+            opacity: 0.5;
+        }
+
+        .page-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-hero h1 {
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .page-hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            padding: 1rem 0;
+            background: var(--bg-alt);
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: var(--text-light);
+        }
+
+        .breadcrumb span {
+            color: var(--text-light);
+            margin: 0 0.5rem;
+        }
+
+        .breadcrumb .current {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Page Content */
+        .page-content {
+            padding: 4rem 0;
+        }
+
+        .page-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-content h3 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+        }
+
+        .page-content p {
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .page-content ul, .page-content ol {
+            margin: 1rem 0 1rem 2rem;
+        }
+
+        .page-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Section Cards */
+        .sections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid #eee;
+            transition: all var(--transition);
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-card-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-alt);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-card-icon .material-icons {
+            font-size: 30px;
+            color: var(--primary);
+        }
+
+        .section-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-card p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all var(--transition);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #d4ad2f;
+            color: var(--primary);
+        }
+
+        .btn-secondary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        .btn-link {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Two Column Layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 4rem;
+        }
+
+        .sidebar {
+            background: var(--bg-alt);
+            padding: 2rem;
+            border-radius: var(--radius);
+            height: fit-content;
+        }
+
+        .sidebar h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin-bottom: 0.75rem;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            color: var(--text);
+        }
+
+        .sidebar a:hover {
+            color: var(--secondary);
+        }
+
+        .sidebar .material-icons {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--primary);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        .cta-section h2 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-dark);
+            color: rgba(255,255,255,0.8);
+            padding: 3rem 0 1.5rem;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer a {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .footer a:hover {
+            color: var(--secondary);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: var(--shadow);
+            }
+
+            .nav-links.active { display: flex; }
+            .nav-toggle { display: flex; }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page-hero {
+                padding: 6rem 0 3rem;
+            }
+
+            .sections-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="/stjohn/" class="nav-logo">
+                <svg viewBox="0 0 100 100"><path d="M50 5L55 35H65V45H55V95H45V45H35V35H45L50 5Z"/><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+                St. John Lutheran
+            </a>
+            <ul class="nav-links">
+                {% for item in nav_items %}
+                <li class="{{ 'has-dropdown' if item.children else '' }}">
+                    <a href="{{ item.url }}" class="{{ 'nav-cta' if item.is_cta else '' }}">{{ item.title }}</a>
+                    {% if item.children %}
+                    <ul class="dropdown">
+                        {% for sub in item.children %}
+                        <li><a href="{{ sub.url }}">{{ sub.title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('active')">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Hero -->
+    <section class="page-hero" {% if page.hero_image_url %}style="background-image: linear-gradient(rgba(30,58,95,0.85), rgba(30,58,95,0.85)), url('{{ page.hero_image_url }}'); background-size: cover; background-position: center;"{% endif %}>
+        <div class="container">
+            <div class="page-hero-content">
+                <h1>{{ page.title }}</h1>
+                {% if page.subtitle %}
+                <p>{{ page.subtitle }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <div class="container">
+            <a href="/stjohn/">Home</a>
+            <span>/</span>
+            <span class="current">{{ page.title }}</span>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <section class="page-content">
+        <div class="container">
+            {% if sections %}
+            <div class="two-col">
+                <div class="main-content">
+                    {% if page.content %}
+                    <div class="intro-content">
+                        {{ page.content | safe }}
+                    </div>
+                    {% endif %}
+
+                    <div class="sections-grid">
+                        {% for section in sections %}
+                        <div class="section-card">
+                            {% if section.icon %}
+                            <div class="section-card-icon">
+                                <span class="material-icons">{{ section.icon }}</span>
+                            </div>
+                            {% endif %}
+                            {% if section.image_url %}
+                            <img src="{{ section.image_url }}" alt="{{ section.title }}">
+                            {% endif %}
+                            {% if section.title %}
+                            <h3>{{ section.title }}</h3>
+                            {% endif %}
+                            {% if section.content %}
+                            <div>{{ section.content | safe }}</div>
+                            {% endif %}
+                            {% if section.link_url %}
+                            <a href="{{ section.link_url }}" class="btn btn-link" target="_blank">{{ section.link_text or 'Learn More' }}</a>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <aside class="sidebar">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="/stjohn/ministry"><span class="material-icons">groups</span> All Ministries</a></li>
+                        <li><a href="/stjohn/worship"><span class="material-icons">church</span> Worship Times</a></li>
+                        <li><a href="/stjohn/events"><span class="material-icons">event</span> Events & Sign-Ups</a></li>
+                        <li><a href="/stjohn/#contact"><span class="material-icons">contact_phone</span> Contact Us</a></li>
+                    </ul>
+
+                    {% if contact %}
+                    <h3 style="margin-top: 2rem;">Contact</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">
+                        {{ contact.phone }}<br>
+                        {{ contact.email }}
+                    </p>
+                    {% endif %}
+                </aside>
+            </div>
+            {% else %}
+            <!-- Single column if no sections -->
+            {% if page.content %}
+            <div class="intro-content" style="max-width: 800px;">
+                {{ page.content | safe }}
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Join Us This Sunday</h2>
+            <p>Experience meaningful worship with a welcoming community. We'd love to meet you!</p>
+            <a href="/stjohn/worship" class="btn btn-primary">View Service Times</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <p>&copy; 2026 St. John Lutheran Church, Joliet IL</p>
+                <div class="footer-links">
+                    <a href="/stjohn/">Home</a>
+                    <a href="/stjohn/about">About</a>
+                    <a href="/stjohn/worship">Worship</a>
+                    <a href="/stjohn/ministry">Ministry</a>
+                    <a href="/stjohn/admin/">Admin</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

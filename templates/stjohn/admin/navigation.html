@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Navigation - St. John Admin{% endblock %}
+
+{% block header %}Main Navigation{% endblock %}
+
+{% block actions %}
+<button class="btn btn-primary" onclick="openNavModal()">
+    <span class="material-icons">add</span> Add Link
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order</th>
+                <th>Title</th>
+                <th>URL</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.sort_order }}</td>
+                <td>
+                    <div style="font-weight: 600;">{{ item.title }}</div>
+                    {% if item.children %}
+                    <div style="margin-left: 1rem; margin-top: 0.5rem; font-size: 0.85rem; color: #888;">
+                        {% for child in item.children %}
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="material-icons" style="font-size: 1rem;">subdirectory_arrow_right</span>
+                            {{ child.title }} ({{ child.url }})
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </td>
+                <td><code>{{ item.url }}</code></td>
+                <td>
+                    {% if item.is_cta %}
+                    <span class="badge" style="background: var(--secondary); color: var(--primary);">CTA BUTTON</span>
+                    {% else %}
+                    <span class="badge">LINK</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.is_active %}
+                    <span class="badge success">Active</span>
+                    {% else %}
+                    <span class="badge danger">Hidden</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button onclick='editNav({{ {"id": item.id, "title": item.title, "url": item.url, "is_active": item.is_active, "is_cta": item.is_cta, "sort_order": item.sort_order} | tojson }})' class="btn btn-secondary btn-sm">
+                            <span class="material-icons" style="font-size: 1rem;">edit</span>
+                        </button>
+                        <form method="POST" action="/stjohn/admin/navigation/{{ item.id }}/delete" style="display:inline;" onsubmit="return confirm('Delete this link and all its children?')">
+                            <button type="submit" class="btn btn-secondary btn-sm" style="color: #ef4444;">
+                                <span class="material-icons" style="font-size: 1rem;">delete</span>
+                            </button>
+                        </form>
+                        <button onclick="openNavModal({{ item.id }})" class="btn btn-secondary btn-sm" title="Add Sub-link">
+                            <span class="material-icons" style="font-size: 1rem;">add_circle_outline</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Nav Modal -->
+<div id="navModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #252536; border-radius: 12px; width: 90%; max-width: 500px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+        <h3 id="modalTitle" style="color: #fff; margin-top: 0;">Add Navigation Link</h3>
+        <form id="navForm" method="POST" action="/stjohn/admin/navigation/new">
+            <input type="hidden" name="parent_id" id="nav-parent-id">
+            
+            <div class="property-field" style="margin-bottom: 1rem;">
+                <label style="display: block; color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">Title</label>
+                <input type="text" name="title" id="nav-title" required style="width: 100%; background: #1e1e2e; border: 1px solid #3a3a4a; color: #fff; padding: 0.75rem; border-radius: 6px;">
+            </div>
+
+            <div class="property-field" style="margin-bottom: 1rem;">
+                <label style="display: block; color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">URL</label>
+                <input type="text" name="url" id="nav-url" required placeholder="#section or /stjohn/slug" style="width: 100%; background: #1e1e2e; border: 1px solid #3a3a4a; color: #fff; padding: 0.75rem; border-radius: 6px;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="property-field">
+                    <label style="display: block; color: #888; font-size: 0.85rem; margin-bottom: 0.5rem;">Sort Order</label>
+                    <input type="number" name="sort_order" id="nav-sort" value="0" style="width: 100%; background: #1e1e2e; border: 1px solid #3a3a4a; color: #fff; padding: 0.75rem; border-radius: 6px;">
+                </div>
+                <div class="property-field" style="display: flex; align-items: center; gap: 0.5rem; padding-top: 1.5rem;">
+                    <input type="checkbox" name="is_cta" id="nav-cta" value="true">
+                    <label for="nav-cta" style="color: #fff; font-size: 0.85rem;">CTA Button</label>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save Link</button>
+                <button type="button" onclick="closeNavModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openNavModal(parentId = null) {
+        document.getElementById('navModal').style.display = 'flex';
+        document.getElementById('navForm').action = '/stjohn/admin/navigation/new';
+        document.getElementById('modalTitle').textContent = parentId ? 'Add Sub-link' : 'Add Navigation Link';
+        document.getElementById('nav-parent-id').value = parentId || '';
+        document.getElementById('nav-title').value = '';
+        document.getElementById('nav-url').value = '';
+        document.getElementById('nav-sort').value = '0';
+        document.getElementById('nav-cta').checked = false;
+    }
+
+    function closeNavModal() {
+        document.getElementById('navModal').style.display = 'none';
+    }
+
+    function editNav(item) {
+        document.getElementById('navModal').style.display = 'flex';
+        document.getElementById('navForm').action = `/stjohn/admin/navigation/${item.id}/edit`;
+        document.getElementById('modalTitle').textContent = 'Edit Link';
+        document.getElementById('nav-title').value = item.title;
+        document.getElementById('nav-url').value = item.url;
+        document.getElementById('nav-sort').value = item.sort_order;
+        document.getElementById('nav-cta').checked = item.is_cta;
+    }
+</script>
+{% endblock %}

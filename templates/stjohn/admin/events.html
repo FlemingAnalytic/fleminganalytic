@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Events & Sign Ups{% endblock %}
+{% block page_title %}Events & Sign Ups{% endblock %}
+
+{% block header_actions %}
+<a href="/stjohn/admin/events/new" class="btn btn-primary">
+    <span class="material-icons">add</span> Add Event
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    {% if events %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Featured</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr>
+                <td>
+                    {% if event.image_url %}
+                    <img src="{{ event.image_url }}" alt="" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">
+                    {% else %}
+                    <span style="color: #9ca3af;">No image</span>
+                    {% endif %}
+                </td>
+                <td><strong>{{ event.title }}</strong></td>
+                <td>
+                    <span class="badge badge-info">{{ event.category or 'event' }}</span>
+                </td>
+                <td>
+                    {% if event.is_featured %}
+                    <span class="badge badge-warning">Featured</span>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if event.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <a href="/stjohn/admin/events/{{ event.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
+                    <form method="POST" action="/stjohn/admin/events/{{ event.id }}/delete" style="display:inline;"
+                          onsubmit="return confirm('Delete this event?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons">event</span>
+        <p>No events yet.</p>
+        <a href="/stjohn/admin/events/new" class="btn btn-primary">Add First Event</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

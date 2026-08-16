@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleming Analytic | Full-Stack Development & API Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .hero-gradient { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+        .feature-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all 0.3s ease; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Hero Section -->
+    <header class="hero-gradient text-white">
+        <nav class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <span class="text-xl font-bold">Fleming Analytic</span>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#services" class="text-white/80 hover:text-white transition">Services</a>
+                <a href="#portfolio" class="text-white/80 hover:text-white transition">Portfolio</a>
+                <a href="#tech" class="text-white/80 hover:text-white transition">Technology</a>
+                <a href="/contactus/home" class="btn-primary px-5 py-2 rounded-lg font-medium">Start a Project</a>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-6 py-20 md:py-28">
+            <div class="max-w-3xl">
+                <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-6">
+                    Full-Stack Development for<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Modern Business Applications</span>
+                </h1>
+                <p class="text-xl text-white/80 mb-8 leading-relaxed">
+                    We build server APIs, database systems, and responsive interfaces that connect your business to its data. From supply chain integrations to custom analytics platforms, we deliver production-ready solutions using state-of-the-art AI tools to accelerate development and enhance quality.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="/analyst/" class="btn-primary px-8 py-4 rounded-xl font-semibold text-lg inline-flex items-center gap-2">
+                        See Our New Data Analyst
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </a>
+                    <a href="/contactus/home" class="px-8 py-4 rounded-xl font-semibold text-lg border border-white/30 hover:bg-white/10 transition">
+                        Contact Us
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Services Section -->
+    <section id="services" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-indigo-600 font-semibold text-sm uppercase tracking-wider">What We Do</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-4">End-to-End Development Services</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    We specialize in building the complete data pipeline: from server-side APIs that process and generate JSON data, to the web and mobile interfaces that present it.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- API Development -->
+                <div class="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl">
+                    <div class="w-14 h-14 feature-icon rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">RESTful API Development</h3>
+                    <p class="text-gray-600 mb-4">Custom server endpoints that deliver JSON data to any client. Built on Python/FastAPI for performance and reliability.</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>JSON data generation</li>
+                        <li>Authentication & security</li>
+                        <li>Third-party integrations</li>
+                    </ul>
+                </div>
+
+                <!-- Database Design -->
+                <div class="p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl">
+                    <div class="w-14 h-14 feature-icon rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">Database Design</h3>
+                    <p class="text-gray-600 mb-4">Schema design, optimization, and data modeling for PostgreSQL, MySQL, SQLite, and NoSQL databases.</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>Relational modeling</li>
+                        <li>Query optimization</li>
+                        <li>Data migration</li>
+                    </ul>
+                </div>
+
+                <!-- Frontend Development -->
+                <div class="p-8 bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl">
+                    <div class="w-14 h-14 feature-icon rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">Web & Mobile Interfaces</h3>
+                    <p class="text-gray-600 mb-4">Responsive HTML/JavaScript frontends that consume your APIs and render data for any device.</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>Single-page applications</li>
+                        <li>Mobile-responsive design</li>
+                        <li>Real-time data updates</li>
+                    </ul>
+                </div>
+
+                <!-- Supply Chain -->
+                <div class="p-8 bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl">
+                    <div class="w-14 h-14 feature-icon rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">Supply Chain Interfaces</h3>
+                    <p class="text-gray-600 mb-4">Connect your systems with vendors, inventory management, and logistics platforms through custom integrations.</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>EDI/API integrations</li>
+                        <li>Inventory tracking</li>
+                        <li>Order management</li>
+                    </ul>
+                </div>
+
+                <!-- Data Analytics -->
+                <div class="p-8 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl">
+                    <div class="w-14 h-14 feature-icon rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">Data Analytics & ML</h3>
+                    <p class="text-gray-600 mb-4">Transform raw data into insights with custom analytics dashboards and machine learning models.</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>Custom dashboards</li>
+                        <li>Predictive models</li>
+                        <li>Automated reporting</li>
+                    </ul>
+                </div>
+
+                <!-- Vertical Markets -->
+                <div class="p-8 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl">
+                    <div class="w-14 h-14 feature-icon rounded-2xl flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-bold text-xl mb-3">Vertical Market Solutions</h3>
+                    <p class="text-gray-600 mb-4">Industry-specific applications for healthcare, finance, retail, and professional services.</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>Healthcare systems</li>
+                        <li>Financial platforms</li>
+                        <li>Restaurant/retail POS</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Stack -->
+    <section id="tech" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-indigo-600 font-semibold text-sm uppercase tracking-wider">Our Stack</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-4">Modern Technology Platform</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Our primary stack centers on Linux-based Python servers delivering JSON to responsive web interfaces. We adapt to your existing infrastructure and requirements.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
+                    <div class="text-3xl mb-3">
+                        <svg class="w-12 h-12 mx-auto text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0L1.5 6v12L12 24l10.5-6V6L12 0zm0 2.25l8.25 4.5v9l-8.25 4.5-8.25-4.5v-9L12 2.25z"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">Backend</h4>
+                    <p class="text-sm text-gray-600">Python, FastAPI, Flask, Node.js, PostgreSQL, Redis</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
+                    <div class="text-3xl mb-3">
+                        <svg class="w-12 h-12 mx-auto text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">Frontend</h4>
+                    <p class="text-sm text-gray-600">HTML5, JavaScript, Tailwind CSS, React, Vue.js</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
+                    <div class="text-3xl mb-3">
+                        <svg class="w-12 h-12 mx-auto text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">Infrastructure</h4>
+                    <p class="text-sm text-gray-600">Linux, Nginx, Docker, AWS, DigitalOcean</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-gray-200 text-center">
+                    <div class="text-3xl mb-3">
+                        <svg class="w-12 h-12 mx-auto text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h4 class="font-bold text-lg mb-2">AI & ML</h4>
+                    <p class="text-sm text-gray-600">scikit-learn, pandas, Claude API, OpenAI</p>
+                </div>
+            </div>
+
+            <div class="mt-12 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border border-indigo-100">
+                <div class="flex items-start gap-6">
+                    <div class="w-16 h-16 feature-icon rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl mb-2">Powered by State-of-the-Art AI</h3>
+                        <p class="text-gray-700 mb-4">We integrate the latest AI technologies into both our development workflow and your applications. From code generation and testing to intelligent features in your products, AI amplifies what we can deliver.</p>
+                        <div class="grid md:grid-cols-3 gap-4 mt-4">
+                            <div class="bg-white/70 rounded-lg p-4">
+                                <h4 class="font-semibold text-sm text-indigo-700 mb-1">AI-Accelerated Development</h4>
+                                <p class="text-xs text-gray-600">Claude, GPT-4, and Copilot for faster coding, testing, and documentation</p>
+                            </div>
+                            <div class="bg-white/70 rounded-lg p-4">
+                                <h4 class="font-semibold text-sm text-indigo-700 mb-1">Intelligent Features</h4>
+                                <p class="text-xs text-gray-600">Natural language interfaces, smart search, and automated analysis in your apps</p>
+                            </div>
+                            <div class="bg-white/70 rounded-lg p-4">
+                                <h4 class="font-semibold text-sm text-indigo-700 mb-1">ML & Predictive Models</h4>
+                                <p class="text-xs text-gray-600">Custom machine learning models for forecasting, classification, and optimization</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-indigo-600 font-semibold text-sm uppercase tracking-wider">Portfolio</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2 mb-4">Project Examples & Prototypes</h2>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Working demonstrations of our capabilities across different industries and use cases. Each showcases client-server architecture with responsive frontends.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Smart Analyst -->
+                <a href="/analyst/" class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="h-2 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+                    <div class="p-6">
+                        <span class="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Data Analytics</span>
+                        <h3 class="text-lg font-bold mt-3 mb-2">Smart Analyst</h3>
+                        <p class="text-gray-600 text-sm mb-3">Upload datasets, run ML models, generate visualizations. Demonstrates file handling, data processing, and dynamic charting.</p>
+                        <span class="text-indigo-600 text-sm font-medium">Try it live &rarr;</span>
+                    </div>
+                </a>
+
+                <!-- Dental EDR -->
+                <a href="https://dentaledr.net" target="_blank" class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="h-2 bg-gradient-to-r from-cyan-500 to-blue-600"></div>
+                    <div class="p-6">
+                        <span class="text-xs font-medium text-cyan-600 bg-cyan-50 px-2 py-1 rounded">Healthcare</span>
+                        <h3 class="text-lg font-bold mt-3 mb-2">DentalEDR.net</h3>
+                        <p class="text-gray-600 text-sm mb-3">Full dental practice management system. Patient records, scheduling, treatment plans, and billing integration.</p>
+                        <span class="text-cyan-600 text-sm font-medium">View external site &rarr;</span>
+                    </div>
+                </a>
+
+                <!-- Restaurant Platform -->
+                <a href="/food/" class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="h-2 bg-gradient-to-r from-pink-500 to-rose-600"></div>
+                    <div class="p-6">
+                        <span class="text-xs font-medium text-pink-600 bg-pink-50 px-2 py-1 rounded">Retail/POS</span>
+                        <h3 class="text-lg font-bold mt-3 mb-2">Restaurant Platform</h3>
+                        <p class="text-gray-600 text-sm mb-3">Menu management, order processing, and email notifications. Shows e-commerce patterns and workflow automation.</p>
+                        <span class="text-pink-600 text-sm font-medium">Try it live &rarr;</span>
+                    </div>
+                </a>
+
+                <!-- Stock Analysis -->
+                <div class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm cursor-pointer" onclick="toggleCard(this)">
+                    <div class="h-2 bg-gradient-to-r from-green-500 to-emerald-600"></div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">Finance</span>
+                            <svg class="w-4 h-4 text-gray-400 expand-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold mt-3 mb-2">Stock Market Tools</h3>
+                        <p class="text-gray-600 text-sm mb-3">S&P 500 tracking, swing trading analysis, efficient frontier calculator. Real-time API data integration.</p>
+                        <div class="card-details hidden border-t pt-3 mt-3 space-y-2">
+                            <a href="/stocks/swing" class="block text-sm text-green-600 hover:underline" onclick="event.stopPropagation()">Swing Trading Dashboard &rarr;</a>
+                            <a href="/stocks/ef" class="block text-sm text-green-600 hover:underline" onclick="event.stopPropagation()">Efficient Frontier &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Economic Data -->
+                <div class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm cursor-pointer" onclick="toggleCard(this)">
+                    <div class="h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">Government Data</span>
+                            <svg class="w-4 h-4 text-gray-400 expand-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold mt-3 mb-2">Economic Indicators</h3>
+                        <p class="text-gray-600 text-sm mb-3">Federal Reserve data visualization. GDP, debt metrics, and time-series analysis from FRED API.</p>
+                        <div class="card-details hidden border-t pt-3 mt-3 space-y-2">
+                            <a href="/fred/gdp" class="block text-sm text-blue-600 hover:underline" onclick="event.stopPropagation()">GDP Charts &rarr;</a>
+                            <a href="/fred/debt" class="block text-sm text-blue-600 hover:underline" onclick="event.stopPropagation()">National Debt &rarr;</a>
+                            <a href="/fred/debt-gdp" class="block text-sm text-blue-600 hover:underline" onclick="event.stopPropagation()">Debt-to-GDP Ratio &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automotive -->
+                <a href="/cars/makes" class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="h-2 bg-gradient-to-r from-red-500 to-orange-600"></div>
+                    <div class="p-6">
+                        <span class="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded">Consumer Data</span>
+                        <h3 class="text-lg font-bold mt-3 mb-2">Automotive Intelligence</h3>
+                        <p class="text-gray-600 text-sm mb-3">Vehicle database with specs, pricing, payment calculator. Wikipedia API integration for enriched data.</p>
+                        <span class="text-red-600 text-sm font-medium">Try it live &rarr;</span>
+                    </div>
+                </a>
+
+                <!-- Chess -->
+                <a href="/chess/" class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="h-2 bg-gradient-to-r from-gray-600 to-gray-800"></div>
+                    <div class="p-6">
+                        <span class="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">Interactive App</span>
+                        <h3 class="text-lg font-bold mt-3 mb-2">Chess Game</h3>
+                        <p class="text-gray-600 text-sm mb-3">AI opponent with difficulty levels. Demonstrates game state management, move validation, and API-driven AI.</p>
+                        <span class="text-gray-600 text-sm font-medium">Play now &rarr;</span>
+                    </div>
+                </a>
+
+                <!-- Astrology -->
+                <a href="/astro/" class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="h-2 bg-gradient-to-r from-purple-500 to-indigo-600"></div>
+                    <div class="p-6">
+                        <span class="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">PDF Generation</span>
+                        <h3 class="text-lg font-bold mt-3 mb-2">Astrology Charts</h3>
+                        <p class="text-gray-600 text-sm mb-3">Birth chart generation with PDF export. Complex calculations, SVG rendering, and document generation.</p>
+                        <span class="text-purple-600 text-sm font-medium">Try it live &rarr;</span>
+                    </div>
+                </a>
+
+                <!-- News -->
+                <a href="/news" class="card-hover bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div class="h-2 bg-gradient-to-r from-teal-500 to-green-600"></div>
+                    <div class="p-6">
+                        <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-1 rounded">Content Aggregation</span>
+                        <h3 class="text-lg font-bold mt-3 mb-2">News Analytics</h3>
+                        <p class="text-gray-600 text-sm mb-3">Automated news aggregation with historical archives. Scheduled tasks, JSON storage, and search functionality.</p>
+                        <span class="text-teal-600 text-sm font-medium">View archives &rarr;</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Additional Examples Link -->
+            <div class="mt-12 text-center">
+                <a href="/examples/" class="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-800 transition">
+                    View Additional Code Examples & Prototypes
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20 hero-gradient text-white">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Build Your Solution?</h2>
+            <p class="text-xl text-white/80 mb-8">
+                Whether you need a complete platform or specific API integrations, we can help scope and deliver your project. Let's discuss your requirements.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="/contactus/home" class="btn-primary px-8 py-4 rounded-xl font-semibold text-lg inline-flex items-center gap-2">
+                    Start a Conversation
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                </a>
+                <a href="/docs" class="px-8 py-4 rounded-xl font-semibold text-lg border border-white/30 hover:bg-white/10 transition">
+                    API Documentation
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold">Fleming Analytic</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">Full-stack development services for modern business applications.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Services</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li>API Development</li>
+                        <li>Database Design</li>
+                        <li>Web Applications</li>
+                        <li>Data Analytics</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Portfolio</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="/analyst/" class="hover:text-white transition">Smart Analyst</a></li>
+                        <li><a href="https://dentaledr.net" target="_blank" class="hover:text-white transition">DentalEDR.net</a></li>
+                        <li><a href="/food/" class="hover:text-white transition">Restaurant Platform</a></li>
+                        <li><a href="/examples/" class="hover:text-white transition">More Examples</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Contact</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="/contactus/home" class="hover:text-white transition">Start a Project</a></li>
+                        <li><a href="/docs" class="hover:text-white transition">API Documentation</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
+                &copy; 2024 Fleming Analytic. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleCard(card) {
+            const details = card.querySelector('.card-details');
+            const icon = card.querySelector('.expand-icon');
+            if (!details) return;
+
+            if (details.classList.contains('hidden')) {
+                document.querySelectorAll('.card-details:not(.hidden)').forEach(el => {
+                    el.classList.add('hidden');
+                    const parentIcon = el.closest('[onclick]')?.querySelector('.expand-icon');
+                    if (parentIcon) parentIcon.style.transform = '';
+                });
+                details.classList.remove('hidden');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            } else {
+                details.classList.add('hidden');
+                if (icon) icon.style.transform = '';
+            }
+        }
+    </script>
+</body>
+</html>

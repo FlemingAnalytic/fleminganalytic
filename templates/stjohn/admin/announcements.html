@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Announcements{% endblock %}
+{% block page_title %}Home Page Announcements{% endblock %}
+
+{% block content %}
+<p style="color: var(--text-light); margin-bottom: 1.5rem;">
+    Manage the two announcement slots that appear on the public home page. Toggle each one active or inactive &mdash; if both are hidden the section won't show at all.
+</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    {% for ann in announcements %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Announcement {{ loop.index }}</h3>
+            {% if ann.is_active %}
+            <span class="badge badge-success">Active</span>
+            {% else %}
+            <span class="badge badge-danger">Hidden</span>
+            {% endif %}
+        </div>
+
+        <form method="POST" action="/stjohn/admin/announcements/{{ ann.id }}/edit">
+            <div class="form-group">
+                <div class="form-check">
+                    <input type="checkbox" name="is_active" id="active_{{ ann.id }}" value="true" {{ 'checked' if ann.is_active }}>
+                    <label for="active_{{ ann.id }}" style="font-weight: 600; color: var(--primary);">Show on home page</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title" class="form-control" value="{{ ann.title or '' }}" placeholder="Announcement title">
+            </div>
+
+            <div class="form-group">
+                <label>Content</label>
+                <textarea name="content" class="wysiwyg" id="content_{{ ann.id }}" rows="5">{{ ann.content or '' }}</textarea>
+                <span class="form-hint">Supports rich text / HTML. You can paste formatted content, add links, images, etc.</span>
+            </div>
+
+            <div class="form-group">
+                <label>Link / PDF URL <small style="font-weight:400; color:var(--text-light);">(optional)</small></label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" name="link_url" id="link_url_{{ ann.id }}" class="form-control" value="{{ ann.link_url or '' }}" placeholder="/static/stjohn/uploads/file.pdf" style="flex:1;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="openUploadModal('link_url_{{ ann.id }}')">
+                        <span class="material-icons" style="font-size:1rem;">upload</span> Upload
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openAssetPicker('link_url_{{ ann.id }}')">
+                        <span class="material-icons" style="font-size:1rem;">collections</span> Browse
+                    </button>
+                </div>
+                <span class="form-hint">Link to a PDF, sign-up form, or any URL. Leave blank for no link button.</span>
+            </div>
+
+            <div class="form-group">
+                <label>Link Button Text <small style="font-weight:400; color:var(--text-light);">(optional)</small></label>
+                <input type="text" name="link_text" class="form-control" value="{{ ann.link_text or '' }}" placeholder="e.g. Download PDF, Learn More, Sign Up">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-icons">save</span> Save Announcement {{ loop.index }}
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    @media (max-width: 968px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,992 @@
+{% extends "base.html" %}
+
+{% block title %}{% if page %}Edit{% else %}New{% endif %} Page{% endblock %}
+{% block page_title %}{% if page %}Edit: {{ page.title }}{% else %}New Page{% endif %}{% endblock %}
+
+{% block header_actions %}
+{% if page %}
+<a href="/stjohn/{{ page.slug }}" target="_blank" class="btn btn-outline">
+    <span class="material-icons">visibility</span> Preview
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+    /* FlutterFlow-style Editor */
+    .editor-container {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 0;
+        margin: -2rem;
+        height: calc(100vh - 80px);
+        background: #1e1e2e;
+    }
+
+    /* Left Panel - Component Tree */
+    .panel-left {
+        background: #252536;
+        border-right: 1px solid #3a3a4a;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        padding: 1rem;
+        border-bottom: 1px solid #3a3a4a;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .panel-header h3 {
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+
+    /* Component Tree Items */
+    .tree-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #a0a0b0;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+        transition: all 0.15s;
+        border: 2px solid transparent;
+    }
+
+    .tree-item:hover {
+        background: #2d2d3f;
+        color: #fff;
+    }
+
+    .tree-item.active {
+        background: #3d3d5f;
+        color: #fff;
+        border-color: var(--secondary);
+    }
+
+    .tree-item.dragging {
+        opacity: 0.5;
+    }
+
+    .tree-item .material-icons {
+        font-size: 1.1rem;
+        color: var(--secondary);
+    }
+
+    .tree-item .drag-handle {
+        cursor: grab;
+        color: #555;
+        margin-left: auto;
+    }
+
+    .tree-item .drag-handle:hover {
+        color: #888;
+    }
+
+    .tree-page {
+        background: #2a2a3d;
+        border-left: 3px solid var(--primary);
+    }
+
+    /* Center Panel - Visual Canvas */
+    .panel-center {
+        background: #1a1a2a;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .canvas-toolbar {
+        background: #252536;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border-bottom: 1px solid #3a3a4a;
+    }
+
+    .canvas-toolbar .device-buttons {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .device-btn {
+        background: transparent;
+        border: none;
+        color: #666;
+        padding: 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .device-btn:hover, .device-btn.active {
+        background: #3a3a4a;
+        color: #fff;
+    }
+
+    .canvas-wrapper {
+        flex: 1;
+        overflow: auto;
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .canvas-frame {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        width: 100%;
+        max-width: 900px;
+        min-height: 600px;
+        overflow: hidden;
+        transition: max-width 0.3s;
+    }
+
+    .canvas-frame.tablet {
+        max-width: 768px;
+    }
+
+    .canvas-frame.mobile {
+        max-width: 375px;
+    }
+
+    /* Preview Content */
+    .preview-hero {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        padding: 3rem 2rem;
+        text-align: center;
+        color: white;
+        cursor: pointer;
+        transition: outline 0.15s;
+    }
+
+    .preview-hero:hover {
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
+    }
+
+    .preview-hero.selected {
+        outline: 3px solid var(--secondary);
+        outline-offset: -3px;
+    }
+
+    .preview-hero h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+
+    .preview-hero p {
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .preview-content {
+        padding: 2rem;
+    }
+
+    .preview-section {
+        background: #f8f9fa;
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .preview-section:hover {
+        border-color: var(--secondary);
+        background: #fff;
+    }
+
+    .preview-section.selected {
+        border-color: var(--secondary);
+        border-style: solid;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.2);
+    }
+
+    .preview-section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .preview-section-header .material-icons {
+        color: var(--primary);
+        font-size: 1.5rem;
+    }
+
+    .preview-section h3 {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .preview-section p {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .add-section-btn {
+        width: 100%;
+        padding: 1.5rem;
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        background: transparent;
+        color: #888;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.15s;
+    }
+
+    .add-section-btn:hover {
+        border-color: var(--secondary);
+        color: var(--secondary);
+        background: rgba(201, 162, 39, 0.05);
+    }
+
+    /* Right Panel - Properties */
+    .panel-right {
+        background: #252536;
+        border-left: 1px solid #3a3a4a;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .properties-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    .property-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .property-group h4 {
+        color: #888;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.75rem;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .property-field {
+        margin-bottom: 1rem;
+    }
+
+    .property-field label {
+        display: block;
+        color: #a0a0b0;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .property-field input,
+    .property-field textarea,
+    .property-field select {
+        width: 100%;
+        background: #1e1e2e;
+        border: 1px solid #3a3a4a;
+        border-radius: 6px;
+        padding: 0.6rem 0.75rem;
+        color: #fff;
+        font-size: 0.9rem;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .property-field input:focus,
+    .property-field textarea:focus,
+    .property-field select:focus {
+        outline: none;
+        border-color: var(--secondary);
+    }
+
+    .property-field textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .property-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .property-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #a0a0b0;
+        font-size: 0.9rem;
+    }
+
+    .property-check input {
+        width: auto;
+        accent-color: var(--secondary);
+    }
+
+    /* Buttons in dark theme */
+    .panel-btn {
+        background: var(--secondary);
+        color: var(--primary);
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.15s;
+    }
+
+    .panel-btn:hover {
+        background: #d4ad2f;
+    }
+
+    .panel-btn.secondary {
+        background: #3a3a4a;
+        color: #fff;
+    }
+
+    .panel-btn.secondary:hover {
+        background: #4a4a5a;
+    }
+
+    .panel-btn.danger {
+        background: #dc2626;
+        color: #fff;
+    }
+
+    .panel-btn.danger:hover {
+        background: #ef4444;
+    }
+
+    .panel-btn.small {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .panel-actions {
+        padding: 1rem;
+        border-top: 1px solid #3a3a4a;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .panel-actions .panel-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* Empty state */
+    .empty-state-dark {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #666;
+    }
+
+    .empty-state-dark .material-icons {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #444;
+    }
+
+    /* Icon picker */
+    .icon-picker {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.25rem;
+        margin-top: 0.5rem;
+        max-height: 150px;
+        overflow-y: auto;
+        background: #1e1e2e;
+        border-radius: 6px;
+        padding: 0.5rem;
+    }
+
+    .icon-option {
+        padding: 0.5rem;
+        text-align: center;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #888;
+    }
+
+    .icon-option:hover {
+        background: #3a3a4a;
+        color: #fff;
+    }
+
+    .icon-option.selected {
+        background: var(--secondary);
+        color: var(--primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .editor-container {
+            grid-template-columns: 1fr;
+        }
+        .panel-left, .panel-right {
+            display: none;
+        }
+    }
+</style>
+
+{% if error %}
+<div style="background: rgba(239, 68, 68, 0.1); color: #dc2626; padding: 1rem; border-radius: var(--radius); margin-bottom: 1.5rem; border-left: 3px solid #dc2626;">
+    {{ error }}
+</div>
+{% endif %}
+
+<div class="editor-container">
+    <!-- Left Panel - Component Tree -->
+    <div class="panel-left">
+        <div class="panel-header">
+            <h3>Structure</h3>
+            <button class="panel-btn small" onclick="document.getElementById('addSectionModal').style.display='flex'">
+                <span class="material-icons" style="font-size: 1rem;">add</span>
+            </button>
+        </div>
+        <div class="panel-content">
+            <!-- Page Node -->
+            <div class="tree-item tree-page" onclick="selectPage()" id="tree-page">
+                <span class="material-icons">article</span>
+                <span>{{ page.title if page else 'New Page' }}</span>
+            </div>
+
+            <!-- Section Nodes -->
+            <div id="sectionTree" style="margin-left: 1rem; margin-top: 0.5rem;">
+                {% if sections %}
+                {% for section in sections %}
+                <div class="tree-item" draggable="true" data-section-id="{{ section.id }}" onclick="selectSection({{ section.id }})">
+                    <span class="material-icons">{{ section.icon or 'widgets' }}</span>
+                    <span>{{ section.title or 'Untitled' }}</span>
+                    <span class="material-icons drag-handle">drag_indicator</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state-dark" style="padding: 1rem;">
+                    <p style="font-size: 0.85rem;">No sections yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="panel-actions">
+            <a href="/stjohn/admin/pages" class="panel-btn secondary">
+                <span class="material-icons" style="font-size: 1rem;">arrow_back</span> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Center Panel - Visual Canvas -->
+    <div class="panel-center">
+        <div class="canvas-toolbar">
+            <div class="device-buttons">
+                <button class="device-btn active" onclick="setDevice('desktop')" title="Desktop">
+                    <span class="material-icons">computer</span>
+                </button>
+                <button class="device-btn" onclick="setDevice('tablet')" title="Tablet">
+                    <span class="material-icons">tablet</span>
+                </button>
+                <button class="device-btn" onclick="setDevice('mobile')" title="Mobile">
+                    <span class="material-icons">smartphone</span>
+                </button>
+            </div>
+            <span style="color: #666; font-size: 0.85rem;">
+                /stjohn/{{ page.slug if page else 'new-page' }}
+            </span>
+            <div style="margin-left: auto;">
+                {% if page %}
+                <a href="/stjohn/{{ page.slug }}" target="_blank" class="panel-btn small secondary">
+                    <span class="material-icons" style="font-size: 1rem;">open_in_new</span> Open
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="canvas-wrapper">
+            <div class="canvas-frame" id="canvasFrame">
+                <!-- Hero Preview -->
+                <div class="preview-hero" id="preview-page" onclick="selectPage()">
+                    <h1 id="preview-title">{{ page.title if page else 'Page Title' }}</h1>
+                    <p id="preview-subtitle">{{ page.subtitle if page else 'Page subtitle goes here' }}</p>
+                </div>
+
+                <!-- Content Preview -->
+                <div class="preview-content">
+                    {% if page and page.content %}
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; cursor: pointer;" onclick="selectPage()">
+                        <small style="color: #888;">Page Content</small>
+                    </div>
+                    {% endif %}
+
+                    <!-- Section Previews -->
+                    <div id="sectionsPreview">
+                        {% if sections %}
+                        {% for section in sections %}
+                        <div class="preview-section" data-section-id="{{ section.id }}" onclick="selectSection({{ section.id }})">
+                            <div class="preview-section-header">
+                                {% if section.icon %}
+                                <span class="material-icons">{{ section.icon }}</span>
+                                {% endif %}
+                                <h3>{{ section.title or 'Untitled Section' }}</h3>
+                            </div>
+                            {% if section.content %}
+                            <p>{{ section.content[:100] }}{% if section.content|length > 100 %}...{% endif %}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    {% if page %}
+                    <button class="add-section-btn" onclick="document.getElementById('addSectionModal').style.display='flex'">
+                        <span class="material-icons">add_circle_outline</span>
+                        Add Section
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Properties Modal -->
+    <div id="pageModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: #252536; border-radius: 12px; width: 90%; max-width: 700px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+            <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #3a3a4a; display: flex; justify-content: space-between; align-items: center; background: #2a2a3d;">
+                <h3 style="color: #fff; margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="material-icons" style="color: var(--secondary);">article</span>
+                    Page Settings
+                </h3>
+                <button type="button" onclick="closePageModal()" style="background: none; border: none; color: #888; cursor: pointer;">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <form method="POST" action="/stjohn/admin/pages/{% if page %}{{ page.id }}/edit{% else %}new{% endif %}" id="pageForm" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <div style="flex: 1; overflow-y: auto; padding: 1.5rem;">
+                    <div class="property-group">
+                        <h4>General</h4>
+                        <div class="property-field">
+                            <label>Title</label>
+                            <input type="text" name="title" id="input-title" value="{{ page.title if page else '' }}" required oninput="document.getElementById('preview-title').textContent = this.value">
+                        </div>
+                        <div class="property-field">
+                            <label>URL Slug</label>
+                            <input type="text" name="slug" id="input-slug" value="{{ page.slug if page else '' }}" pattern="[a-z0-9-]+" required>
+                        </div>
+                        <div class="property-field">
+                            <label>Subtitle</label>
+                            <input type="text" name="subtitle" value="{{ page.subtitle if page else '' }}" oninput="document.getElementById('preview-subtitle').textContent = this.value">
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <h4>Hero & Layout</h4>
+                        <div class="property-field">
+                            <label>Background Image URL</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="url" name="hero_image_url" id="page-hero-image" value="{{ page.hero_image_url if page else '' }}" placeholder="https://...">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="openUploadModal('page-hero-image')">Upload</button>
+                            </div>
+                        </div>
+                        <div class="property-field">
+                            <label>Main Content (HTML)</label>
+                            <textarea name="content" id="page-content" class="wysiwyg" rows="6">{{ page.content if page else '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <h4>SEO & Meta</h4>
+                        <div class="property-field">
+                            <label>Meta Description</label>
+                            <input type="text" name="meta_description" value="{{ page.meta_description if page else '' }}" maxlength="160">
+                        </div>
+                    </div>
+
+                    <div class="property-group">
+                        <h4>Navigation</h4>
+                        <div class="property-row">
+                            <div class="property-field">
+                                <label>Order</label>
+                                <input type="number" name="nav_order" value="{{ page.nav_order if page else 0 }}">
+                            </div>
+                            <div class="property-field" style="display: flex; align-items: end;">
+                                <label class="property-check">
+                                    <input type="checkbox" name="show_in_nav" value="true" {% if page and page.show_in_nav %}checked{% endif %}>
+                                    Show in Nav
+                                </label>
+                            </div>
+                        </div>
+                        {% if page %}
+                        <div class="property-field">
+                            <label class="property-check">
+                                <input type="checkbox" name="is_active" value="true" {% if page.is_active %}checked{% endif %}>
+                                Page Active
+                            </label>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div style="padding: 1.25rem 1.5rem; background: #1e1e2e; border-top: 1px solid #3a3a4a; display: flex; gap: 1rem;">
+                    <button type="submit" class="panel-btn" style="flex: 1; justify-content: center;">
+                        <span class="material-icons" style="font-size: 1rem;">save</span>
+                        Save Page
+                    </button>
+                    {% if page %}
+                    <button type="button" class="panel-btn danger" onclick="if(confirm('Delete this page?')) document.getElementById('deletePageForm').submit()">
+                        <span class="material-icons" style="font-size: 1rem;">delete</span>
+                    </button>
+                    {% endif %}
+                    <button type="button" onclick="closePageModal()" class="panel-btn secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+        <!-- Section Properties (Modal) -->
+        <div id="sectionModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: #252536; border-radius: 12px; width: 90%; max-width: 600px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #3a3a4a; display: flex; justify-content: space-between; align-items: center; background: #2a2a3d;">
+                    <h3 style="color: #fff; margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="material-icons" style="color: var(--secondary);">widgets</span>
+                        Edit Section
+                    </h3>
+                    <button type="button" onclick="closeSectionModal()" style="background: none; border: none; color: #888; cursor: pointer;">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                
+                <form method="POST" id="sectionForm" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                    <div style="flex: 1; overflow-y: auto; padding: 1.5rem;">
+                        <div class="property-group">
+                            <h4>Section Settings</h4>
+                            <div class="property-field">
+                                <label>Title</label>
+                                <input type="text" name="title" id="section-title">
+                            </div>
+                            <div class="property-field">
+                                <label>Icon</label>
+                                <input type="text" name="icon" id="section-icon" placeholder="Material icon name">
+                                <div class="icon-picker">
+                                    {% for icon in ['church', 'groups', 'school', 'restaurant', 'music_note', 'menu_book', 'favorite', 'volunteer_activism', 'event', 'local_cafe', 'local_florist', 'videocam', 'diversity_3', 'public', 'info', 'email', 'phone', 'location_on', 'schedule', 'star'] %}
+                                    <div class="icon-option" onclick="setIcon('{{ icon }}')">
+                                        <span class="material-icons">{{ icon }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="property-group">
+                            <h4>Content</h4>
+                            <div class="property-field">
+                                <label>Description (HTML)</label>
+                                <textarea name="content" id="section-content" class="wysiwyg" rows="4"></textarea>
+                            </div>
+                            <div class="property-field">
+                                <label>Image URL</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="url" name="image_url" id="section-image" style="flex:1;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="openUploadModal('section-image')">Upload</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="property-group">
+                            <h4>Link</h4>
+                            <div class="property-row">
+                                <div class="property-field">
+                                    <label>URL</label>
+                                    <input type="url" name="link_url" id="section-link-url">
+                                </div>
+                                <div class="property-field">
+                                    <label>Button Text</label>
+                                    <input type="text" name="link_text" id="section-link-text" placeholder="Learn More">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="property-group">
+                            <h4>Display & Status</h4>
+                            <div class="property-row">
+                                <div class="property-field">
+                                    <label>Sort Order</label>
+                                    <input type="number" name="sort_order" id="section-order" value="0">
+                                </div>
+                                <div class="property-field" style="display: flex; align-items: end;">
+                                    <label class="property-check">
+                                        <input type="checkbox" name="is_active" id="section-active" value="true" checked>
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="section_type" value="card">
+                    </div>
+
+                    <div style="padding: 1.25rem 1.5rem; background: #1e1e2e; border-top: 1px solid #3a3a4a; display: flex; gap: 1rem;">
+                        <button type="submit" class="panel-btn" style="flex: 1; justify-content: center;">
+                            <span class="material-icons" style="font-size: 1rem;">save</span>
+                            Save Changes
+                        </button>
+                        <button type="button" class="panel-btn danger" id="deleteSectionBtn">
+                            <span class="material-icons" style="font-size: 1rem;">delete</span>
+                            Delete
+                        </button>
+                        <button type="button" onclick="closeSectionModal()" class="panel-btn secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if page %}
+<!-- Delete Page Form -->
+<form method="POST" action="/stjohn/admin/pages/{{ page.id }}/delete" id="deletePageForm" style="display: none;"></form>
+
+<!-- Add Section Modal -->
+<div id="addSectionModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #252536; border-radius: 12px; width: 90%; max-width: 500px; overflow: hidden;">
+        <div style="padding: 1.5rem; border-bottom: 1px solid #3a3a4a; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="color: #fff; margin: 0;">Add Section</h3>
+            <button onclick="document.getElementById('addSectionModal').style.display='none'" style="background: none; border: none; color: #888; cursor: pointer;">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <form method="POST" action="/stjohn/admin/pages/{{ page.id }}/sections/new" style="padding: 1.5rem;">
+            <div class="property-field">
+                <label>Section Title</label>
+                <input type="text" name="title" required style="width: 100%; background: #1e1e2e; border: 1px solid #3a3a4a; border-radius: 6px; padding: 0.75rem; color: #fff;">
+            </div>
+            <div class="property-field">
+                <label>Icon</label>
+                <select name="icon" style="width: 100%; background: #1e1e2e; border: 1px solid #3a3a4a; border-radius: 6px; padding: 0.75rem; color: #fff;">
+                    <option value="">None</option>
+                    <option value="church">Church</option>
+                    <option value="groups">Groups</option>
+                    <option value="school">School</option>
+                    <option value="restaurant">Restaurant</option>
+                    <option value="music_note">Music</option>
+                    <option value="menu_book">Book</option>
+                    <option value="favorite">Heart</option>
+                    <option value="event">Event</option>
+                    <option value="videocam">Video</option>
+                    <option value="info">Info</option>
+                </select>
+            </div>
+            <div class="property-field">
+                <label>Content</label>
+                <textarea name="content" id="modal-section-content" class="wysiwyg" rows="3" style="width: 100%; background: #1e1e2e; border: 1px solid #3a3a4a; border-radius: 6px; padding: 0.75rem; color: #fff;"></textarea>
+            </div>
+            <input type="hidden" name="section_type" value="card">
+            <input type="hidden" name="sort_order" value="{{ (sections|length if sections else 0) + 1 }}">
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                <button type="button" class="panel-btn secondary" style="flex: 1;" onclick="document.getElementById('addSectionModal').style.display='none'">Cancel</button>
+                <button type="submit" class="panel-btn" style="flex: 1;">Add Section</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    // Section data for editing
+    const sectionsData = {
+        {% if sections %}
+        {% for section in sections %}
+        {{ section.id }}: {
+            id: {{ section.id }},
+            title: "{{ section.title or '' }}",
+            icon: "{{ section.icon or '' }}",
+            content: `{{ section.content|replace('\n', '\\n')|replace('"', '\\"') if section.content else '' }}`,
+            image_url: "{{ section.image_url or '' }}",
+            link_url: "{{ section.link_url or '' }}",
+            link_text: "{{ section.link_text or '' }}",
+            sort_order: {{ section.sort_order }},
+            is_active: {{ 'true' if section.is_active else 'false' }}
+        },
+        {% endfor %}
+        {% endif %}
+    };
+
+    let currentSelection = 'page';
+    let currentSectionId = null;
+
+    function selectPage(showModal = true) {
+        currentSelection = 'page';
+        currentSectionId = null;
+
+        // Update UI
+        document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('tree-page').classList.add('active');
+
+        document.querySelectorAll('.preview-section').forEach(el => el.classList.remove('selected'));
+        document.getElementById('preview-page').classList.add('selected');
+
+        // Show page modal
+        if (showModal) {
+            document.getElementById('pageModal').style.display = 'flex';
+            
+            // SunEditor might need a refresh
+            if (editors['page-content']) {
+                setTimeout(() => editors['page-content'].refresh(), 10);
+            }
+        }
+    }
+
+    function closePageModal() {
+        document.getElementById('pageModal').style.display = 'none';
+        // Clear selection colors
+        document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.preview-section').forEach(el => el.classList.remove('selected'));
+    }
+
+    function closeSectionModal() {
+        document.getElementById('sectionModal').style.display = 'none';
+        // Clear selection colors
+        document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.preview-section').forEach(el => el.classList.remove('selected'));
+    }
+
+    // Close modal on click outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('sectionModal');
+        const pModal = document.getElementById('pageModal');
+        const addModal = document.getElementById('addSectionModal');
+        const uploadModal = document.getElementById('uploadModal');
+        
+        if (event.target == modal) closeSectionModal();
+        if (event.target == pModal) closePageModal();
+        if (event.target == addModal) addModal.style.display = 'none';
+        if (event.target == uploadModal) uploadModal.style.display = 'none';
+    }
+
+    function selectSection(id) {
+        currentSelection = 'section';
+        currentSectionId = id;
+
+        const data = sectionsData[id];
+        if (!data) return;
+
+        // Update tree
+        document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.tree-item[data-section-id="${id}"]`)?.classList.add('active');
+
+        // Update canvas
+        document.getElementById('preview-page').classList.remove('selected');
+        document.querySelectorAll('.preview-section').forEach(el => el.classList.remove('selected'));
+        document.querySelector(`.preview-section[data-section-id="${id}"]`)?.classList.add('selected');
+
+        // Show section modal
+        document.getElementById('sectionModal').style.display = 'flex';
+        document.getElementById('section-icon').value = data.icon;
+        
+        if (editors['section-content']) {
+            editors['section-content'].setContents(data.content || '');
+            // SunEditor might need a refresh when visibility changes
+            setTimeout(() => {
+                if (editors['section-content']) editors['section-content'].refresh();
+            }, 10);
+        } else {
+            document.getElementById('section-content').value = data.content;
+        }
+
+        document.getElementById('section-image').value = data.image_url;
+        document.getElementById('section-link-url').value = data.link_url;
+        document.getElementById('section-link-text').value = data.link_text;
+        document.getElementById('section-order').value = data.sort_order;
+        document.getElementById('section-active').checked = data.is_active;
+
+        // Update form action
+        document.getElementById('sectionForm').action = `/stjohn/admin/pages/{{ page.id if page else 0 }}/sections/${id}/edit`;
+
+        // Update icon picker
+        document.querySelectorAll('.icon-option').forEach(el => {
+            el.classList.toggle('selected', el.querySelector('.material-icons').textContent === data.icon);
+        });
+
+        // Setup delete button
+        document.getElementById('deleteSectionBtn').onclick = function() {
+            if (confirm('Delete this section?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/stjohn/admin/pages/{{ page.id if page else 0 }}/sections/${id}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        };
+    }
+
+    function setIcon(iconName) {
+        document.getElementById('section-icon').value = iconName;
+        document.querySelectorAll('.icon-option').forEach(el => {
+            el.classList.toggle('selected', el.querySelector('.material-icons').textContent === iconName);
+        });
+    }
+
+    function setDevice(device) {
+        const frame = document.getElementById('canvasFrame');
+        frame.classList.remove('tablet', 'mobile');
+        if (device !== 'desktop') {
+            frame.classList.add(device);
+        }
+
+        document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.device-btn').classList.add('active');
+    }
+
+    // Auto-generate slug from title
+    document.getElementById('input-title').addEventListener('input', function() {
+        const slugField = document.getElementById('input-slug');
+        if (!slugField.value || slugField.dataset.autoGenerate !== 'false') {
+            slugField.value = this.value
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+            slugField.dataset.autoGenerate = 'true';
+        }
+    });
+
+    document.getElementById('input-slug').addEventListener('input', function() {
+        this.dataset.autoGenerate = 'false';
+    });
+
+    // Initialize
+    selectPage(false);
+</script>
+{% endblock %}

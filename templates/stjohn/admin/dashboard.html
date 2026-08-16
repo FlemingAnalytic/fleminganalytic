@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="icon blue">
+            <span class="material-icons">church</span>
+        </div>
+        <div class="value">{{ stats.services }}</div>
+        <div class="label">Worship Services</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="icon gold">
+            <span class="material-icons">event</span>
+        </div>
+        <div class="value">{{ stats.events }}</div>
+        <div class="label">Active Events</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="icon green">
+            <span class="material-icons">groups</span>
+        </div>
+        <div class="value">{{ stats.ministries }}</div>
+        <div class="label">Ministries</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="icon red">
+            <span class="material-icons">campaign</span>
+        </div>
+        <div class="value">{{ stats.announcements }}</div>
+        <div class="label">Announcements</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Recent Events</h3>
+        <a href="/stjohn/admin/events" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+
+    {% if recent_events %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in recent_events %}
+            <tr>
+                <td><strong>{{ event.title }}</strong></td>
+                <td>
+                    <span class="badge badge-info">{{ event.category or 'event' }}</span>
+                </td>
+                <td>
+                    {% if event.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-warning">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>{{ event.updated_at.strftime('%b %d, %Y') if event.updated_at else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons">event</span>
+        <p>No events yet.</p>
+        <a href="/stjohn/admin/events/new" class="btn btn-primary">Add Your First Event</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Quick Actions</h3>
+    </div>
+    <div class="quick-actions">
+        <a href="/stjohn/admin/events/new" class="btn btn-primary">
+            <span class="material-icons">add</span> New Event
+        </a>
+        <a href="/stjohn/admin/services/new" class="btn btn-secondary">
+            <span class="material-icons">add</span> New Service
+        </a>
+        <a href="/stjohn/admin/ministries/new" class="btn btn-secondary">
+            <span class="material-icons">add</span> New Ministry
+        </a>
+        <a href="/stjohn/admin/contact" class="btn btn-outline">
+            <span class="material-icons">edit</span> Edit Contact Info
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">API Endpoints</h3>
+    </div>
+    <p style="color: var(--text-light); margin-bottom: 1.5rem;">
+        Use these JSON endpoints to fetch content for your static sites or external integrations:
+    </p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Endpoint</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code class="api-endpoint">/stjohn/admin/api/services</code></td>
+                <td>Get all active worship services</td>
+            </tr>
+            <tr>
+                <td><code class="api-endpoint">/stjohn/admin/api/events</code></td>
+                <td>Get all active events and sign-ups</td>
+            </tr>
+            <tr>
+                <td><code class="api-endpoint">/stjohn/admin/api/ministries</code></td>
+                <td>Get all active ministries</td>
+            </tr>
+            <tr>
+                <td><code class="api-endpoint">/stjohn/admin/api/contact</code></td>
+                <td>Get contact information</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+# The virtual environment. The reason this repository exists as a fresh
+# history rather than a push of the old one: venv/ was committed, which put
+# 40,109 files and 3.13 GiB into the object store, including CUDA libraries
+# of 543MB, 450MB and 252MB. GitHub refuses any file over 100MB, so that
+# history cannot be pushed anywhere, private or not.
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Secrets. .env holds the database URL, the SMTP password and the FRED API
+# key. It was tracked in the previous history; it is not tracked here, and
+# should not become tracked again.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+keys/
+
+# Databases and anything else the running application writes. These are
+# state, not source - they belong to a particular server and not to the code.
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+apps/analyst/uploads/
+apps/analyst/data_library.json
+
+# Generated data and media, all of it rebuildable by the scripts that made
+# it: momentum/ 794MB, news/ 688MB, static/ 514MB, weather/ 132MB, db/ 102MB.
+momentum/
+news/data/
+weather/
+sp500/
+examples/
+db/
+csv/
+
+# Built frontends. The client is its own repository; these are its output.
+client-prod/
+client/
+
+# Server logs and runtime artefacts
+*.log
+access_log*
+error_log*
+*.sock
+.deploy.env
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+.claude/

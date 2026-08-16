@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Analysis Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <div class="dashboard-container flex-1">
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex justify-between items-center flex-wrap gap-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-newspaper text-2xl text-blue-600"></i>
+                        <h1 class="text-2xl font-bold text-gray-900">News Analysis Dashboard</h1>
+                    </div>
+                    <div class="flex items-center gap-6 flex-wrap">
+                        <div class="flex items-center gap-4">
+                            <span id="lastUpdate" class="text-sm text-gray-600">Loading...</span>
+                            <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-all duration-200 transform hover:-translate-y-0.5" title="Refresh News">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="dateSelect" class="font-medium text-gray-900">Analysis Date:</label>
+                            <select id="dateSelect" class="min-w-48 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select a date...</option>
+                                <option value="2025-10-25">October 25, 2025</option>
+                                <option value="2025-10-24">October 24, 2025</option>
+                                <option value="2025-10-23">October 23, 2025</option>
+                                <option value="2025-10-22">October 22, 2025</option>
+                                <option value="2025-10-21">October 21, 2025</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="headlinesTab" class="tab-btn active px-4 py-2 border border-gray-300 rounded-lg bg-blue-600 text-white transition-all duration-200">Headlines</button>
+                            <button id="analysisTab" class="tab-btn px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-600 hover:bg-gray-50 transition-all duration-200">Analysis</button>
+                            <button id="contentTab" class="tab-btn px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-600 hover:bg-gray-50 transition-all duration-200">Content</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+            <!-- Tab Content Container -->
+            <div class="tab-content">
+                <!-- Headlines Tab (Default) -->
+                <div id="headlinesContent" class="tab-pane active">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Fox News Column -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+                                <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                                    <i class="fas fa-tv text-red-600"></i> Fox News
+                                </h2>
+                            </div>
+                            <div class="p-6 max-h-[600px] overflow-y-auto" id="foxHeadlinesList">
+                                <div class="flex flex-col items-center gap-4 py-8 text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-3xl"></i>
+                                    <p>Loading Fox News headlines...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- CNN Column -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                                <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                                    <i class="fas fa-broadcast-tower text-blue-600"></i> CNN
+                                </h2>
+                            </div>
+                            <div class="p-6 max-h-[600px] overflow-y-auto" id="cnnHeadlinesList">
+                                <div class="flex flex-col items-center gap-4 py-8 text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-3xl"></i>
+                                    <p>Loading CNN headlines...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Common Coverage Section -->
+                    <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-yellow-50">
+                            <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                                <i class="fas fa-star text-yellow-600"></i> Common Coverage
+                            </h2>
+                        </div>
+                        <div class="p-6 max-h-[400px] overflow-y-auto" id="commonHeadlinesList">
+                            <div class="flex flex-col items-center gap-4 py-8 text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-3xl"></i>
+                                <p>Loading common coverage...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Tab -->
+                <div id="analysisContent" class="tab-pane">
+                    <!-- Summary Cards -->
+                    <section class="mb-8">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-newspaper text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="totalArticles" class="text-2xl font-bold text-gray-900">--</h3>
+                                        <p class="text-gray-600 font-medium">Total Articles</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-chart-line text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="coverageOverlap" class="text-2xl font-bold text-gray-900">--%</h3>
+                                        <p class="text-gray-600 font-medium">Coverage Overlap</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="informationGaps" class="text-2xl font-bold text-gray-900">--</h3>
+                                        <p class="text-gray-600 font-medium">Information Gaps</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-clock text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="lastUpdated" class="text-2xl font-bold text-gray-900">--</h3>
+                                        <p class="text-gray-600 font-medium">Last Updated</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+            <!-- AI Analysis Section -->
+            <section class="mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-500 to-blue-600">
+                        <div class="flex justify-between items-center">
+                            <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
+                                <i class="fas fa-brain"></i> AI Analysis Summary
+                            </h2>
+                            <span class="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm font-semibold">AI Powered</span>
+                        </div>
+                    </div>
+                    <div class="p-6" id="aiSummary">
+                        <div class="flex flex-col items-center gap-4 py-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-3xl"></i>
+                            <p>Loading AI analysis...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hourly Breakdown Section (Hidden by default) -->
+            <section class="mb-8" id="hourlySection" style="display: none;">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <i class="fas fa-chart-bar"></i> Hourly Activity Breakdown
+                        </h2>
+                    </div>
+                    <div class="p-6" id="hourlyChart">
+                        <!-- Chart will be generated here -->
+                    </div>
+                </div>
+            </section>
+                </div>
+
+                <!-- Content Tab -->
+                <div id="contentContent" class="tab-pane">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                            <div class="flex justify-between items-center flex-wrap gap-4">
+                                <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                                    <i class="fas fa-file-text"></i> Article Content
+                                </h2>
+                                <div class="flex gap-4 items-center flex-wrap">
+                                    <select id="contentSourceFilter" class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="all">All Sources</option>
+                                        <option value="fox_news">Fox News</option>
+                                        <option value="cnn">CNN</option>
+                                    </select>
+                                    <select id="contentTypeFilter" class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="all">All Articles</option>
+                                        <option value="exclusive">Exclusive Only</option>
+                                        <option value="common">Common Coverage</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6 max-h-[600px] overflow-y-auto" id="contentList">
+                            <div class="flex flex-col items-center gap-4 py-8 text-gray-500">
+                                <i class="fas fa-info-circle text-3xl"></i>
+                                <p>Click on any headline to load article content with links</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="analysisContent" class="tab-pane">
+                    <!-- Summary Cards -->
+                    <section class="mb-8">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-newspaper text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="totalArticles" class="text-2xl font-bold text-gray-900">--</h3>
+                                        <p class="text-gray-600 font-medium">Total Articles</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-chart-line text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="coverageOverlap" class="text-2xl font-bold text-gray-900">--%</h3>
+                                        <p class="text-gray-600 font-medium">Coverage Overlap</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="informationGaps" class="text-2xl font-bold text-gray-900">--</h3>
+                                        <p class="text-gray-600 font-medium">Information Gaps</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                                <div class="flex items-center gap-4">
+                                    <div class="bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                                        <i class="fas fa-clock text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 id="lastUpdated" class="text-2xl font-bold text-gray-900">--</h3>
+                                        <p class="text-gray-600 font-medium">Last Updated</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+            <!-- AI Analysis Section -->
+            <section class="mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-500 to-blue-600">
+                        <div class="flex justify-between items-center">
+                            <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
+                                <i class="fas fa-brain"></i> AI Analysis Summary
+                            </h2>
+                            <span class="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm font-semibold">AI Powered</span>
+                        </div>
+                    </div>
+                    <div class="p-6" id="aiSummary">
+                        <div class="flex flex-col items-center gap-4 py-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-3xl"></i>
+                            <p>Loading AI analysis...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Information Gaps Section -->
+            <section class="mb-8">
+                <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Information Gap Analysis</h2>
+                    <div class="flex gap-6 flex-wrap">
+                        <span class="flex items-center gap-2 text-sm text-gray-600">
+                            <i class="fas fa-star text-yellow-500"></i>
+                            Common stories (covered by both sources)
+                        </span>
+                        <span class="flex items-center gap-2 text-sm text-gray-600">
+                            <i class="fas fa-circle text-gray-400"></i>
+                            Exclusive coverage
+                        </span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 bg-red-50 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <h3 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                                    <i class="fas fa-tv text-red-600"></i> Fox News Exclusive
+                                </h3>
+                                <span id="foxCount" class="bg-red-600 text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                            </div>
+                        </div>
+                        <div class="p-6 max-h-80 overflow-y-auto" id="foxExclusive">
+                            <p class="text-gray-500 italic text-center py-8">No exclusive stories found</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 bg-blue-50 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <h3 class="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                                    <i class="fas fa-broadcast-tower text-blue-600"></i> CNN Exclusive
+                                </h3>
+                                <span id="cnnCount" class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">0</span>
+                            </div>
+                        </div>
+                        <div class="p-6 max-h-80 overflow-y-auto" id="cnnExclusive">
+                            <p class="text-gray-500 italic text-center py-8">No exclusive stories found</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hourly Breakdown Section (Hidden by default) -->
+            <section class="mb-8" id="hourlySection" style="display: none;">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <i class="fas fa-chart-bar"></i> Hourly Activity Breakdown
+                        </h2>
+                    </div>
+                    <div class="p-6" id="hourlyChart">
+                        <!-- Chart will be generated here -->
+                    </div>
+                </div>
+            </section>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+<!-- Footer -->
+<footer class="bg-white border-t border-gray-200 py-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-gray-600 text-sm">&copy; 2025 News Analysis Dashboard. Real-time monitoring of Fox News and CNN coverage patterns.</p>
+    </div>
+</footer>
+</div>
+
+<script src="/static/news/dashboard.js?v=1086"></script>
+</body>
+</html>

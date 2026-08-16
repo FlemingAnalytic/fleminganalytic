@@ -1,0 +1,698 @@
+{% extends "base.html" %}
+
+{% block title %}Image Editor{% endblock %}
+{% block page_title %}Image Editor{% endblock %}
+
+{% block header_actions %}
+<a href="/stjohn/admin/assets" class="btn btn-outline btn-sm">
+    <span class="material-icons">arrow_back</span> Back to Assets
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Cropper.js CSS & JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+
+<style>
+    .editor-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    .editor-canvas-wrap {
+        background: #e5e7eb;
+        border-radius: var(--radius);
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 500px;
+        max-height: 80vh;
+    }
+    .editor-canvas-wrap canvas,
+    .editor-canvas-wrap img {
+        max-width: 100%;
+        max-height: 80vh;
+        display: block;
+    }
+    .tool-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .tool-section {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    .tool-section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--primary);
+        border-bottom: 1px solid var(--gray-200);
+        user-select: none;
+        transition: background var(--transition);
+    }
+    .tool-section-header:hover {
+        background: var(--bg-alt);
+    }
+    .tool-section-header .material-icons {
+        font-size: 1.1rem;
+    }
+    .tool-section-header .chevron {
+        margin-left: auto;
+        transition: transform 0.2s;
+    }
+    .tool-section-header.collapsed .chevron {
+        transform: rotate(-90deg);
+    }
+    .tool-section-body {
+        padding: 1rem;
+    }
+    .tool-section-body.hidden {
+        display: none;
+    }
+    .tool-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        align-items: center;
+    }
+    .tool-row:last-child {
+        margin-bottom: 0;
+    }
+    .tool-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-light);
+        min-width: 70px;
+    }
+    .tool-row input[type="range"] {
+        flex: 1;
+        accent-color: var(--primary);
+    }
+    .tool-row .range-value {
+        font-size: 0.8rem;
+        font-weight: 600;
+        min-width: 40px;
+        text-align: right;
+        color: var(--primary);
+    }
+    .tool-row input[type="number"] {
+        width: 80px;
+        padding: 0.4rem 0.5rem;
+        border: 2px solid var(--gray-200);
+        border-radius: var(--radius);
+        font-size: 0.85rem;
+        font-family: 'Open Sans', sans-serif;
+    }
+    .tool-row input[type="number"]:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius);
+        border: 2px solid var(--gray-200);
+        background: white;
+        cursor: pointer;
+        transition: all var(--transition);
+        color: var(--text);
+    }
+    .btn-icon:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(30, 58, 95, 0.05);
+    }
+    .btn-icon.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+    }
+    .aspect-btns {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+    }
+    .aspect-btn {
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        border: 1.5px solid var(--gray-300);
+        background: white;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: 600;
+        transition: all 0.15s;
+        color: var(--text);
+    }
+    .aspect-btn:hover, .aspect-btn.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+    }
+    .editor-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .editor-actions .btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 120px;
+    }
+    .size-info {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        text-align: center;
+        padding: 0.5rem;
+        background: var(--bg-alt);
+        border-radius: 4px;
+    }
+    @media (max-width: 968px) {
+        .editor-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+{% if image_src %}
+<div class="editor-layout">
+    <!-- Canvas Area -->
+    <div class="card" style="padding: 0.75rem;">
+        <div class="editor-canvas-wrap" id="canvasWrap">
+            <canvas id="editorCanvas"></canvas>
+            <img id="cropImage" style="display:none;" crossorigin="anonymous">
+        </div>
+        <div class="size-info" id="sizeInfo">Loading...</div>
+    </div>
+
+    <!-- Tools Panel -->
+    <div class="tool-panel">
+        <!-- Crop -->
+        <div class="tool-section">
+            <div class="tool-section-header" onclick="toggleSection(this)">
+                <span class="material-icons">crop</span> Crop
+                <span class="material-icons chevron">expand_more</span>
+            </div>
+            <div class="tool-section-body">
+                <div class="tool-row">
+                    <div class="aspect-btns">
+                        <button class="aspect-btn active" onclick="setAspectRatio(NaN, this)">Free</button>
+                        <button class="aspect-btn" onclick="setAspectRatio(1, this)">1:1</button>
+                        <button class="aspect-btn" onclick="setAspectRatio(4/3, this)">4:3</button>
+                        <button class="aspect-btn" onclick="setAspectRatio(16/9, this)">16:9</button>
+                        <button class="aspect-btn" onclick="setAspectRatio(3/2, this)">3:2</button>
+                    </div>
+                </div>
+                <div class="tool-row">
+                    <button class="btn btn-secondary btn-sm" onclick="startCrop()" id="cropStartBtn" style="flex:1; justify-content:center;">
+                        <span class="material-icons">crop</span> Start Crop
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="applyCrop()" id="cropApplyBtn" style="flex:1; justify-content:center; display:none;">
+                        <span class="material-icons">check</span> Apply
+                    </button>
+                    <button class="btn btn-outline btn-sm" onclick="cancelCrop()" id="cropCancelBtn" style="display:none;">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resize -->
+        <div class="tool-section">
+            <div class="tool-section-header" onclick="toggleSection(this)">
+                <span class="material-icons">photo_size_select_large</span> Resize
+                <span class="material-icons chevron">expand_more</span>
+            </div>
+            <div class="tool-section-body">
+                <div class="tool-row">
+                    <span class="tool-label">Width</span>
+                    <input type="number" id="resizeWidth" min="1" max="10000" onchange="onResizeInput('width')">
+                    <span style="font-size:0.8rem; color:var(--text-light);">px</span>
+                </div>
+                <div class="tool-row">
+                    <span class="tool-label">Height</span>
+                    <input type="number" id="resizeHeight" min="1" max="10000" onchange="onResizeInput('height')">
+                    <span style="font-size:0.8rem; color:var(--text-light);">px</span>
+                </div>
+                <div class="tool-row">
+                    <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; cursor:pointer;">
+                        <input type="checkbox" id="lockAspect" checked style="accent-color:var(--primary);">
+                        <span class="material-icons" style="font-size:1rem;">lock</span> Lock aspect ratio
+                    </label>
+                </div>
+                <div class="tool-row">
+                    <button class="btn btn-secondary btn-sm" onclick="applyResize()" style="flex:1; justify-content:center;">
+                        <span class="material-icons">check</span> Apply Resize
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rotate & Flip -->
+        <div class="tool-section">
+            <div class="tool-section-header" onclick="toggleSection(this)">
+                <span class="material-icons">rotate_right</span> Rotate & Flip
+                <span class="material-icons chevron">expand_more</span>
+            </div>
+            <div class="tool-section-body">
+                <div class="tool-row" style="justify-content: center;">
+                    <button class="btn-icon" onclick="rotateImage(-90)" title="Rotate Left 90">
+                        <span class="material-icons">rotate_left</span>
+                    </button>
+                    <button class="btn-icon" onclick="rotateImage(90)" title="Rotate Right 90">
+                        <span class="material-icons">rotate_right</span>
+                    </button>
+                    <button class="btn-icon" onclick="flipImage('horizontal')" title="Flip Horizontal">
+                        <span class="material-icons">flip</span>
+                    </button>
+                    <button class="btn-icon" onclick="flipImage('vertical')" title="Flip Vertical" style="transform: rotate(90deg);">
+                        <span class="material-icons">flip</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Brightness & Contrast -->
+        <div class="tool-section">
+            <div class="tool-section-header" onclick="toggleSection(this)">
+                <span class="material-icons">brightness_6</span> Adjustments
+                <span class="material-icons chevron">expand_more</span>
+            </div>
+            <div class="tool-section-body">
+                <div class="tool-row">
+                    <span class="tool-label">Brightness</span>
+                    <input type="range" id="brightness" min="-100" max="100" value="0" oninput="updateAdjustments()">
+                    <span class="range-value" id="brightnessVal">0</span>
+                </div>
+                <div class="tool-row">
+                    <span class="tool-label">Contrast</span>
+                    <input type="range" id="contrast" min="-100" max="100" value="0" oninput="updateAdjustments()">
+                    <span class="range-value" id="contrastVal">0</span>
+                </div>
+                <div class="tool-row">
+                    <span class="tool-label">Saturation</span>
+                    <input type="range" id="saturation" min="-100" max="100" value="0" oninput="updateAdjustments()">
+                    <span class="range-value" id="saturationVal">0</span>
+                </div>
+                <div class="tool-row">
+                    <span class="tool-label">Opacity</span>
+                    <input type="range" id="opacity" min="0" max="100" value="100" oninput="updateAdjustments()">
+                    <span class="range-value" id="opacityVal">100%</span>
+                </div>
+                <div class="tool-row">
+                    <button class="btn btn-outline btn-sm" onclick="resetAdjustments()" style="flex:1; justify-content:center;">
+                        Reset Adjustments
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="tool-section">
+            <div style="padding: 1rem;">
+                <div class="editor-actions" style="flex-direction: column;">
+                    <button class="btn btn-primary" onclick="saveImage()" id="saveBtn">
+                        <span class="material-icons">save</span> Save as New Asset
+                    </button>
+                    <button class="btn btn-outline" onclick="resetAll()">
+                        <span class="material-icons">restart_alt</span> Reset All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const IMAGE_SRC = '{{ image_src }}';
+const IMAGE_FILENAME = '{{ image_filename }}';
+
+const canvas = document.getElementById('editorCanvas');
+const ctx = canvas.getContext('2d');
+const cropImg = document.getElementById('cropImage');
+const sizeInfo = document.getElementById('sizeInfo');
+
+// State
+let originalImageData = null;  // The raw pixel data after geometry changes
+let currentImage = new Image();
+let cropper = null;
+let cropAspect = NaN;
+let aspectRatio = 1;
+
+// Load the image
+currentImage.crossOrigin = 'anonymous';
+currentImage.onload = function() {
+    drawImageToCanvas(currentImage);
+    aspectRatio = currentImage.naturalWidth / currentImage.naturalHeight;
+    document.getElementById('resizeWidth').value = canvas.width;
+    document.getElementById('resizeHeight').value = canvas.height;
+    updateSizeInfo();
+    // Save the initial state
+    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+};
+currentImage.onerror = function() {
+    sizeInfo.textContent = 'Failed to load image. The image may not allow cross-origin access.';
+};
+currentImage.src = IMAGE_SRC;
+
+function drawImageToCanvas(img) {
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+}
+
+function updateSizeInfo() {
+    sizeInfo.textContent = canvas.width + ' x ' + canvas.height + ' px';
+}
+
+// ==================== COLLAPSIBLE SECTIONS ====================
+function toggleSection(header) {
+    header.classList.toggle('collapsed');
+    const body = header.nextElementSibling;
+    body.classList.toggle('hidden');
+}
+
+// ==================== CROP ====================
+function setAspectRatio(ratio, btn) {
+    cropAspect = ratio;
+    document.querySelectorAll('.aspect-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (cropper) {
+        cropper.setAspectRatio(ratio);
+    }
+}
+
+function startCrop() {
+    // Show the image element for Cropper.js, hide canvas
+    canvas.style.display = 'none';
+    cropImg.style.display = 'block';
+
+    // Draw current canvas state to the crop image
+    cropImg.src = canvas.toDataURL('image/png');
+
+    cropImg.onload = function() {
+        cropper = new Cropper(cropImg, {
+            aspectRatio: isNaN(cropAspect) ? NaN : cropAspect,
+            viewMode: 1,
+            responsive: true,
+            background: true,
+            autoCropArea: 0.8,
+        });
+    };
+
+    document.getElementById('cropStartBtn').style.display = 'none';
+    document.getElementById('cropApplyBtn').style.display = '';
+    document.getElementById('cropCancelBtn').style.display = '';
+}
+
+function applyCrop() {
+    if (!cropper) return;
+
+    const croppedCanvas = cropper.getCroppedCanvas();
+    if (!croppedCanvas) return;
+
+    // Draw cropped result back to our main canvas
+    canvas.width = croppedCanvas.width;
+    canvas.height = croppedCanvas.height;
+    ctx.drawImage(croppedCanvas, 0, 0);
+
+    // Update state
+    aspectRatio = canvas.width / canvas.height;
+    document.getElementById('resizeWidth').value = canvas.width;
+    document.getElementById('resizeHeight').value = canvas.height;
+    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    updateSizeInfo();
+    resetAdjustments();
+
+    endCrop();
+}
+
+function cancelCrop() {
+    endCrop();
+}
+
+function endCrop() {
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    }
+    cropImg.style.display = 'none';
+    canvas.style.display = 'block';
+
+    document.getElementById('cropStartBtn').style.display = '';
+    document.getElementById('cropApplyBtn').style.display = 'none';
+    document.getElementById('cropCancelBtn').style.display = 'none';
+}
+
+// ==================== RESIZE ====================
+function onResizeInput(changed) {
+    const lock = document.getElementById('lockAspect').checked;
+    const wInput = document.getElementById('resizeWidth');
+    const hInput = document.getElementById('resizeHeight');
+
+    if (lock) {
+        if (changed === 'width') {
+            hInput.value = Math.round(parseInt(wInput.value) / aspectRatio);
+        } else {
+            wInput.value = Math.round(parseInt(hInput.value) * aspectRatio);
+        }
+    }
+}
+
+function applyResize() {
+    const newW = parseInt(document.getElementById('resizeWidth').value);
+    const newH = parseInt(document.getElementById('resizeHeight').value);
+    if (!newW || !newH || newW < 1 || newH < 1) {
+        alert('Please enter valid dimensions');
+        return;
+    }
+
+    // Create temp canvas with current content
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+    // Resize main canvas
+    canvas.width = newW;
+    canvas.height = newH;
+    ctx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, newW, newH);
+
+    aspectRatio = newW / newH;
+    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    updateSizeInfo();
+    resetAdjustments();
+}
+
+// ==================== ROTATE & FLIP ====================
+function rotateImage(degrees) {
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+
+    if (Math.abs(degrees) === 90) {
+        tempCanvas.width = canvas.height;
+        tempCanvas.height = canvas.width;
+    } else {
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+    }
+
+    tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+    tempCtx.rotate(degrees * Math.PI / 180);
+    tempCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+
+    canvas.width = tempCanvas.width;
+    canvas.height = tempCanvas.height;
+    ctx.drawImage(tempCanvas, 0, 0);
+
+    aspectRatio = canvas.width / canvas.height;
+    document.getElementById('resizeWidth').value = canvas.width;
+    document.getElementById('resizeHeight').value = canvas.height;
+    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    updateSizeInfo();
+    resetAdjustments();
+}
+
+function flipImage(direction) {
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    tempCtx.drawImage(canvas, 0, 0);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (direction === 'horizontal') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+    } else {
+        ctx.translate(0, canvas.height);
+        ctx.scale(1, -1);
+    }
+    ctx.drawImage(tempCanvas, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    resetAdjustments();
+}
+
+// ==================== ADJUSTMENTS ====================
+function updateAdjustments() {
+    const brightness = parseInt(document.getElementById('brightness').value);
+    const contrast = parseInt(document.getElementById('contrast').value);
+    const saturation = parseInt(document.getElementById('saturation').value);
+    const opacity = parseInt(document.getElementById('opacity').value);
+
+    document.getElementById('brightnessVal').textContent = brightness;
+    document.getElementById('contrastVal').textContent = contrast;
+    document.getElementById('saturationVal').textContent = saturation;
+    document.getElementById('opacityVal').textContent = opacity + '%';
+
+    if (!originalImageData) return;
+
+    // Restore the base image data
+    ctx.putImageData(originalImageData, 0, 0);
+
+    // Build CSS filter string
+    const brightnessF = 1 + brightness / 100;
+    const contrastF = 1 + contrast / 100;
+    const saturateF = 1 + saturation / 100;
+
+    // Apply filters by re-drawing with filter
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(canvas, 0, 0);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Apply opacity via globalAlpha
+    ctx.globalAlpha = opacity / 100;
+
+    // Apply brightness/contrast/saturation via filter
+    ctx.filter = `brightness(${brightnessF}) contrast(${contrastF}) saturate(${saturateF})`;
+    ctx.drawImage(tempCanvas, 0, 0);
+
+    // Reset
+    ctx.filter = 'none';
+    ctx.globalAlpha = 1.0;
+}
+
+function resetAdjustments() {
+    document.getElementById('brightness').value = 0;
+    document.getElementById('contrast').value = 0;
+    document.getElementById('saturation').value = 0;
+    document.getElementById('opacity').value = 100;
+    document.getElementById('brightnessVal').textContent = '0';
+    document.getElementById('contrastVal').textContent = '0';
+    document.getElementById('saturationVal').textContent = '0';
+    document.getElementById('opacityVal').textContent = '100%';
+}
+
+// ==================== RESET ALL ====================
+function resetAll() {
+    // Reload the original image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        drawImageToCanvas(img);
+        aspectRatio = img.naturalWidth / img.naturalHeight;
+        document.getElementById('resizeWidth').value = canvas.width;
+        document.getElementById('resizeHeight').value = canvas.height;
+        originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        updateSizeInfo();
+        resetAdjustments();
+    };
+    img.src = IMAGE_SRC;
+
+    // Cancel any active crop
+    endCrop();
+}
+
+// ==================== SAVE ====================
+function saveImage() {
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Saving...';
+
+    // Determine format from original filename
+    let format = 'image/jpeg';
+    let ext = '.jpg';
+    const lower = IMAGE_FILENAME.toLowerCase();
+    if (lower.endsWith('.png')) {
+        format = 'image/png';
+        ext = '.png';
+    } else if (lower.endsWith('.webp')) {
+        format = 'image/webp';
+        ext = '.webp';
+    }
+
+    canvas.toBlob(function(blob) {
+        if (!blob) {
+            alert('Failed to export image');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-icons">save</span> Save as New Asset';
+            return;
+        }
+
+        // Build filename: edited_originalname
+        let baseName = IMAGE_FILENAME.replace(/\.[^.]+$/, '');
+        const editedFilename = 'edited_' + baseName + ext;
+
+        const formData = new FormData();
+        formData.append('file', blob, editedFilename);
+
+        fetch('/stjohn/admin/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.location) {
+                btn.innerHTML = '<span class="material-icons">check_circle</span> Saved!';
+                setTimeout(() => {
+                    window.location.href = '/stjohn/admin/assets';
+                }, 1000);
+            } else {
+                alert('Save failed: ' + (data.error || 'Unknown error'));
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-icons">save</span> Save as New Asset';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error saving image: ' + err.message);
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-icons">save</span> Save as New Asset';
+        });
+    }, format, 0.92);
+}
+</script>
+
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <span class="material-icons">image_not_supported</span>
+        <p>No image selected. Please go to the Asset Library and click Edit on an image.</p>
+        <a href="/stjohn/admin/assets" class="btn btn-primary">
+            <span class="material-icons">collections</span> Go to Asset Library
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

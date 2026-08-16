@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt Outstanding Chart</title>
+
+    <!-- Import Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Import jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Import Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Remove excess margin and padding */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        .container {
+            padding: 0;
+            margin: 0;
+            height: 100vh; /* Use full viewport height */
+        }
+        </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Federal Debt</h2>
+        <canvas id="debtChart" width="400" height="200"></canvas>
+    </div>
+
+    <script>
+        // Define the API URL for U.S. Treasury Data
+        //const apiURL = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_outstanding?filter=record_fiscal_year:gte:1999';
+        const apiURL='https://fleminganalytic.com/get_fred?series_id=FYGFD';
+        // Call the API and fetch data
+        $(document).ready(function () {
+            console.log("Fetching data from the API...");
+            $.getJSON(apiURL,function (data) {
+                
+                
+                // Check if data.data exists
+                if (data && data.observations) {
+                    // Extract fiscal years and debt outstanding amounts
+                    const fiscalYears = [];
+                    const debtAmounts = [];
+
+                    data.observations.forEach(function (item) {
+                        fiscalYears.push(item.date.substring(0, 4));
+                        debtAmounts.push(item.value / 1e3); // Convert amounts to billions for readability
+                       
+                    });
+
+                    // Create the chart using Chart.js
+                    const ctx = document.getElementById('debtChart').getContext('2d');
+                    const debtChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: fiscalYears,
+                            datasets: [{
+                                label: 'Debt Outstanding Over the Years',
+                                data: debtAmounts,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                fill: false,
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Debt Outstanding (in Trillions)'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Fiscal Year'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    console.error("Error: Data format incorrect or missing.");
+                }
+            }).fail(function(jqxhr, textStatus, error) {
+                var err = textStatus + ", " + error;
+                console.error("Request Failed: " + err);
+            });
+        });
+    </script>
+</body>
+</html>

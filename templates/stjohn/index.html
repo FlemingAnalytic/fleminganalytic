@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St. John Lutheran Church | Joliet, IL</title>
+    <meta name="description" content="St. John Lutheran Church (ELCA) in Joliet, IL. A welcoming community sharing the love of Christ. Join us for worship, fellowship, and service.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8a;
+            --secondary: #c9a227;
+            --accent: #8b2635;
+            --text: #333;
+            --text-light: #666;
+            --bg: #fff;
+            --bg-alt: #f8f9fa;
+            --bg-dark: #1a1a2e;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
+            --radius: 8px;
+            --transition: 0.3s ease;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Merriweather', serif;
+            line-height: 1.3;
+            color: var(--primary);
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        a:hover { color: var(--secondary); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.98);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Merriweather', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .nav-logo svg {
+            width: 40px;
+            height: 40px;
+            fill: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--text);
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--secondary);
+            transition: width var(--transition);
+        }
+
+        .nav-links a:hover::after { width: 100%; }
+
+        /* Dropdown Styles */
+        .nav-links li { position: relative; }
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #fff;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+            padding: 0.5rem 0;
+            list-style: none;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+        .dropdown li a {
+            padding: 0.75rem 1.5rem;
+            color: var(--text-dark);
+            display: block;
+            font-size: 0.9rem;
+        }
+        .dropdown li a:hover {
+            background: #f8f9fa;
+            color: var(--primary);
+        }
+        .nav-links li:hover .dropdown { display: block; }
+
+        .nav-cta {
+            background: var(--primary);
+            color: white !important;
+            padding: 0.6rem 1.25rem;
+            border-radius: var(--radius);
+        }
+
+        .nav-cta:hover { background: var(--primary-light); }
+        .nav-cta::after { display: none; }
+
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .nav-toggle span {
+            width: 25px;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        /* Hero */
+        .hero {
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+            padding: 100px 0 60px;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>') repeat;
+            background-size: 100px;
+            opacity: 0.5;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            color: white;
+            max-width: 700px;
+        }
+
+        .hero-label {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            max-width: 550px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all var(--transition);
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: #d4ad2f;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: var(--primary);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .btn-outline:hover {
+            background: white;
+            color: var(--primary);
+            border-color: white;
+        }
+
+        .btn-secondary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-light);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-link {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Sections */
+        section { padding: 5rem 0; }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 3rem;
+        }
+
+        .section-header h2 {
+            font-size: clamp(2rem, 4vw, 2.75rem);
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        /* Announcements */
+        .announcements {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-top: 4px solid var(--secondary);
+        }
+
+        .announcements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .announcement-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--secondary);
+        }
+
+        .announcement-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .announcement-card .announcement-body {
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        .announcement-card .announcement-body:last-child {
+            margin-bottom: 0;
+        }
+
+        .announcement-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--secondary);
+            color: var(--primary);
+            padding: 0.5rem 1.25rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all var(--transition);
+        }
+
+        .announcement-link:hover {
+            background: #d4ad2f;
+            color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        /* About */
+        .about { background: var(--bg-alt); }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .about-image-main {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .about-image-main svg {
+            width: 150px;
+            height: 150px;
+            fill: rgba(255,255,255,0.2);
+        }
+
+        .about-content h2 { margin-bottom: 1.5rem; }
+        .about-content p { margin-bottom: 1rem; color: var(--text-light); }
+
+        .about-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .about-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .about-feature .material-icons {
+            color: var(--secondary);
+        }
+
+        /* Ministries */
+        .ministries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .ministry-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
+            border: 1px solid #eee;
+        }
+
+        .ministry-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .ministry-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-alt);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .ministry-icon .material-icons {
+            font-size: 30px;
+            color: var(--primary);
+        }
+
+        .ministry-card h3 { font-size: 1.25rem; margin-bottom: 0.75rem; }
+        .ministry-card p { color: var(--text-light); font-size: 0.95rem; }
+
+        /* Worship Section */
+        .worship {
+            background: var(--primary);
+            color: white;
+        }
+
+        .worship .section-header h2,
+        .worship .section-header p { color: white; }
+
+        .worship-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .worship-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .worship-card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .worship-card h3 {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .worship-card .time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1;
+        }
+
+        .worship-card .description { 
+            opacity: 0.9; 
+            font-size: 1rem; 
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        .worship-card .links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+
+        .btn-bulletin, .btn-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-bulletin {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-bulletin:hover {
+            background: white;
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-live {
+            background: #e74c3c;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn-live:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+        }
+
+        .worship-note {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: var(--radius);
+        }
+
+        .worship-note a { color: var(--secondary); }
+
+        /* Events */
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .event-card {
+            background: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
+        }
+
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .event-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .event-card-body { padding: 1.5rem; }
+        .event-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .event-card p { color: var(--text-light); font-size: 0.9rem; margin-bottom: 1rem; }
+
+        .event-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: var(--bg-alt);
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+
+        /* Contact */
+        .contact { background: var(--bg-alt); }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+        }
+
+        .contact-info h2 { margin-bottom: 1.5rem; }
+        .contact-info > p { color: var(--text-light); margin-bottom: 2rem; }
+
+        .contact-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .contact-item {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .contact-item-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .contact-item-icon .material-icons { color: white; }
+        .contact-item-content h4 { font-size: 1rem; margin-bottom: 0.25rem; }
+        .contact-item-content p { color: var(--text-light); font-size: 0.95rem; }
+
+        .map-container {
+            height: 400px;
+            background: var(--bg-alt);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-dark);
+            color: rgba(255,255,255,0.8);
+            padding: 4rem 0 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand h3 { color: white; font-size: 1.5rem; margin-bottom: 1rem; }
+        .footer-brand p { font-size: 0.95rem; line-height: 1.8; }
+
+        .footer-links h4 { color: white; font-size: 1rem; margin-bottom: 1.25rem; }
+        .footer-links ul { list-style: none; }
+        .footer-links li { margin-bottom: 0.75rem; }
+        .footer-links a { color: rgba(255,255,255,0.7); font-size: 0.95rem; }
+        .footer-links a:hover { color: var(--secondary); }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+
+        .footer-social a:hover { background: var(--secondary); }
+        .footer-social .material-icons { color: white; font-size: 20px; }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                padding: 1rem;
+                gap: 0;
+                box-shadow: var(--shadow);
+            }
+
+            .nav-links.active { display: flex; }
+            .nav-links li { padding: 0.75rem 0; border-bottom: 1px solid #eee; }
+            .nav-toggle { display: flex; }
+
+            .about-grid,
+            .contact-grid { grid-template-columns: 1fr; }
+
+            .about-image { order: -1; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .hero-buttons { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+.footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+        }
+    </style>
+    {% if content.liturgical_season and content.liturgical_season.content and content.liturgical_season.content != 'default' %}
+    <style>
+        {% if content.liturgical_season.content == 'advent' %}
+        :root {
+            --primary: #2e1065;
+            --primary-light: #4a1a8a;
+            --secondary: #c9a227;
+            --bg-dark: #1a0a30;
+        }
+        {% elif content.liturgical_season.content == 'christmas' %}
+        :root {
+            --primary: #1a472a;
+            --primary-light: #2d6a4f;
+            --secondary: #d4af37;
+            --accent: #8b0000;
+            --bg-dark: #0d2818;
+        }
+        {% elif content.liturgical_season.content == 'epiphany' %}
+        :root {
+            --primary: #1a5276;
+            --primary-light: #2e86c1;
+            --secondary: #d4af37;
+            --bg-dark: #0e2f44;
+        }
+        {% elif content.liturgical_season.content == 'lent' %}
+        :root {
+            --primary: #3d1551;
+            --primary-light: #5b2378;
+            --secondary: #9e8a5e;
+            --bg-dark: #1f0a2e;
+        }
+        {% elif content.liturgical_season.content == 'easter' %}
+        :root {
+            --primary: #1a5276;
+            --primary-light: #2980b9;
+            --secondary: #d4af37;
+            --bg-dark: #0e2f44;
+        }
+        {% elif content.liturgical_season.content == 'pentecost' %}
+        :root {
+            --primary: #8b1a1a;
+            --primary-light: #c0392b;
+            --secondary: #d4af37;
+            --bg-dark: #4a0e0e;
+        }
+        {% endif %}
+    </style>
+    {% endif %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">
+                <svg viewBox="0 0 100 100"><path d="M50 5L55 35H65V45H55V95H45V45H35V35H45L50 5Z"/><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="3"/></svg>
+                St. John Lutheran
+            </a>
+            <ul class="nav-links">
+                {% for item in nav_items %}
+                <li class="{{ 'has-dropdown' if item.children else '' }}">
+                    <a href="{{ item.url }}" class="{{ 'nav-cta' if item.is_cta else '' }}"{% if item.url.startswith('http') %} target="_blank"{% endif %}>{{ item.title }}</a>
+                    {% if item.children %}
+                    <ul class="dropdown">
+                        {% for sub in item.children %}
+                        <li><a href="{{ sub.url }}">{{ sub.title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('active')">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero"{% if content.hero_image and content.hero_image.image_url %} style="background: linear-gradient(rgba(30,58,95,0.7), rgba(30,58,95,0.85)), url('{{ content.hero_image.image_url }}') center/cover no-repeat;"{% endif %}>
+        <div class="container">
+            <div class="hero-content">
+                <span class="hero-label">A Ministry of the ELCA</span>
+                <h1>{{ content.hero_title.title if content.hero_title else 'Sharing the Love of Christ' }}</h1>
+                <p>{{ content.hero_subtitle.content | safe if content.hero_subtitle else "Welcome to St. John Lutheran Church in Joliet, IL. We're a diverse community united by faith, gathered to worship, grow, and serve together." }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Worship -->
+    <section id="worship" class="worship">
+        <div class="container">
+            <div class="section-header">
+                <h2>Join Us for Worship</h2>
+                <p>Experience meaningful worship with a welcoming community. Multiple service times and styles to fit your schedule.</p>
+            </div>
+            <div class="worship-grid">
+                {% for service in services %}
+                <div class="worship-card">
+                    <div class="worship-card-content">
+                        <h3>{{ service.day }}</h3>
+                        <div class="time">{{ service.time }}</div>
+                        <div class="description">{{ service.description | safe or service.name }}</div>
+                    </div>
+                    <div class="links">
+                        {% if service.bulletin_url %}
+                        <a href="{{ service.bulletin_url }}" class="btn-bulletin" target="_blank">
+                            <span class="material-icons">description</span> Bulletin
+                        </a>
+                        {% endif %}
+                        {% if service.livestream_url %}
+                        <a href="{{ service.livestream_url }}" class="btn-live" target="_blank">
+                            <span class="material-icons">live_tv</span> Watch Live
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="worship-card">
+                    <h3>Sunday</h3>
+                    <div class="time">10:00 AM</div>
+                    <p>Join us for worship</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% if services and services[0].livestream_url %}
+            <div class="worship-note">
+                <p>Can't join us in person? Watch our service live on our <a href="{{ services[0].livestream_url }}" target="_blank">YouTube Channel</a>.</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Announcements -->
+    {% if announcements %}
+    <section class="announcements">
+        <div class="container">
+            <div class="section-header">
+                <h2>Announcements</h2>
+            </div>
+            <div class="announcements-grid">
+                {% for ann in announcements %}
+                <div class="announcement-card">
+                    <h3>{{ ann.title }}</h3>
+                    {% if ann.content %}
+                    <div class="announcement-body">{{ ann.content | safe }}</div>
+                    {% endif %}
+                    {% if ann.link_url %}
+                    <a href="{{ ann.link_url }}" class="announcement-link" target="_blank">
+                        <span class="material-icons" style="font-size:1.1rem;">{% if ann.link_url.endswith('.pdf') %}picture_as_pdf{% else %}open_in_new{% endif %}</span>
+                        {{ ann.link_text or 'Learn More' }}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- About -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-image">
+                    <div class="about-image-main" style="padding: 0; overflow: hidden;">
+                        <iframe src="https://my.matterport.com/show/?m=YPgK1ya2aMf" frameborder="0" allowfullscreen allow="autoplay; fullscreen; web-share; xr-spatial-tracking;" style="width:100%; height:100%;"></iframe>
+                    </div>
+                </div>
+                <div class="about-content">
+                    <h2>{{ content.about_text.title if content.about_text else 'A Place Where You Belong' }}</h2>
+                    <p>{{ content.about_text.content | safe if content.about_text else "St. John Lutheran Church is a diverse group of people who believe that God has gathered us together. This is Christ's church, and there is a place for you here." }}</p>
+                    <p>Freed by our faith, we seek to embrace everyone as a whole person - questions, complexities, and all. We share a living, daring confidence in God's grace that frees us to love and serve our neighbors.</p>
+                    <div class="about-features">
+                        <div class="about-feature">
+                            <span class="material-icons">check_circle</span>
+                            <span>Welcoming Community</span>
+                        </div>
+                        <div class="about-feature">
+                            <span class="material-icons">check_circle</span>
+                            <span>All Ages Welcome</span>
+                        </div>
+                        <div class="about-feature">
+                            <span class="material-icons">check_circle</span>
+                            <span>Active Outreach</span>
+                        </div>
+                        <div class="about-feature">
+                            <span class="material-icons">check_circle</span>
+                            <span>ELCA Lutheran</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ministries -->
+    <section id="ministries">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Ministries</h2>
+                <p>We offer programs and ministries for all ages and stages of faith, from infants to seniors.</p>
+            </div>
+            <div class="ministries-grid">
+                {% for ministry in ministries %}
+                <div class="ministry-card">
+                    <div class="ministry-icon">
+                        <span class="material-icons">{{ ministry.icon or 'groups' }}</span>
+                    </div>
+                    <h3>{{ ministry.name }}</h3>
+                    <div>{{ ministry.description | safe }}</div>
+                    {% if ministry.page_url %}
+                    <a href="{{ ministry.page_url }}" class="btn btn-link" style="margin-top: 1rem;"{% if not ministry.page_url.startswith('/stjohn') %} target="_blank"{% endif %}>Learn More</a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="ministry-card">
+                    <div class="ministry-icon">
+                        <span class="material-icons">groups</span>
+                    </div>
+                    <h3>Ministries Coming Soon</h3>
+                    <p>Check back for information about our ministries.</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="/stjohn/ministry" class="btn btn-secondary">View All Ministries</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Events -->
+    <section id="events">
+        <div class="container">
+            <div class="section-header">
+                <h2>Events & Sign-Ups</h2>
+                <p>Stay connected with what's happening at St. John. Everyone is welcome!</p>
+            </div>
+            <div class="events-grid">
+                {% for event in events %}
+                <div class="event-card">
+                    {% if event.image_url %}
+                    <img src="{{ event.image_url }}" alt="{{ event.title }}">
+                    {% endif %}
+                    <div class="event-card-body">
+                        <span class="event-badge">{{ event.category or 'Event' }}</span>
+                        <h3>{{ event.title }}</h3>
+                        {% if event.description %}
+                        <div>{{ event.description | safe }}</div>
+                        {% endif %}
+                        {% if event.signup_url %}
+                        <a href="{{ event.signup_url }}" class="btn btn-primary" style="padding: 0.5rem 1rem;" target="_blank">Sign Up</a>
+                        {% elif event.details_url %}
+                        <a href="{{ event.details_url }}" class="btn btn-link" target="_blank">Learn More</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="event-card">
+                    <div class="event-card-body">
+                        <h3>Events Coming Soon</h3>
+                        <p>Check back for upcoming events and sign-ups.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <h2>Visit Us</h2>
+                    <p>We'd love to meet you! Stop by for a service or reach out with any questions. Our doors and hearts are open.</p>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <div class="contact-item-icon">
+                                <span class="material-icons">location_on</span>
+                            </div>
+                            <div class="contact-item-content">
+                                <h4>Address</h4>
+                                <p>
+                                    {% if contact %}
+                                    {{ contact.address_line1 }}<br>
+                                    {% if contact.address_line2 %}{{ contact.address_line2 }}<br>{% endif %}
+                                    {{ contact.city }}, {{ contact.state }} {{ contact.zip_code }}
+                                    {% else %}
+                                    2650 Plainfield Road<br>Joliet, IL 60435
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-item-icon">
+                                <span class="material-icons">phone</span>
+                            </div>
+                            <div class="contact-item-content">
+                                <h4>Phone</h4>
+                                <p>{{ contact.phone if contact else '(815) 439-2320' }}</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-item-icon">
+                                <span class="material-icons">email</span>
+                            </div>
+                            <div class="contact-item-content">
+                                <h4>Email</h4>
+                                <p>{{ contact.email if contact else 'contact@stjohnjoliet.org' }}</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-item-icon">
+                                <span class="material-icons">schedule</span>
+                            </div>
+                            <div class="contact-item-content">
+                                <h4>Office Hours</h4>
+                                <p>{{ contact.office_hours if contact else 'Monday - Friday: 9 AM - 4 PM' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="map-container">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2974.5!2d-88.12!3d41.52!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x880e5e3b7b7b7b7b%3A0x0!2s2650+Plainfield+Rd%2C+Joliet%2C+IL+60435!5e0!3m2!1sen!2sus!4v1" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>St. John Lutheran Church</h3>
+                    <p>A Ministry of the Evangelical Lutheran Church in America (ELCA). We are part of the Northern Illinois Synod, sharing God's love with our community and beyond.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#worship">Worship Times</a></li>
+                        <li><a href="#ministries">Ministries</a></li>
+                        <li><a href="#events">Events</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Get Involved</h4>
+                    <ul>
+                        <li><a href="#events">Volunteer</a></li>
+                        <li><a href="https://give.tithe.ly/?formId=234a59e6-0f54-448e-8ea7-3cbfc8bc69f2" target="_blank">Give Online</a></li>
+                        <li><a href="http://stjohnfood.org/">Food Pantry</a></li>
+                        <li><a href="#ministries">Youth Programs</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <ul>
+                        {% if contact and contact.youtube_url %}
+                        <li><a href="{{ contact.youtube_url }}">Sermons</a></li>
+                        {% endif %}
+                        <li><a href="#contact">Contact</a></li>
+                        <li><a href="/stjohn/admin/">Admin Login</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 St. John Lutheran Church, Joliet IL. All rights reserved.</p>
+                <div class="footer-social">
+                    {% if contact and contact.facebook_url %}
+                    <a href="{{ contact.facebook_url }}" aria-label="Facebook" target="_blank">
+                        <span class="material-icons">facebook</span>
+                    </a>
+                    {% endif %}
+                    {% if contact and contact.youtube_url %}
+                    <a href="{{ contact.youtube_url }}" aria-label="YouTube" target="_blank">
+                        <span class="material-icons">smart_display</span>
+                    </a>
+                    {% endif %}
+                    {% if contact and contact.instagram_url %}
+                    <a href="{{ contact.instagram_url }}" aria-label="Instagram" target="_blank">
+                        <span class="material-icons">photo_camera</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    document.querySelector('.nav-links').classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

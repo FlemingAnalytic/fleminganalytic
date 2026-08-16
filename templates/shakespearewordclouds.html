@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shakespeare WordClouds</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+    </head>
+    
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="bg-primary text-light rounded mt-5 text-center">Shakespeare WordClouds</h1>
+        <select id="booksDropdown" class="form-control mt-3"></select>
+        <img id="wordCloudImage" src="" alt="Word Cloud Image" class="img-fluid mt-3 " style="display:none;width:400px ">
+    </div>
+
+    <script>
+        // Function to handle radio button changes and make an AJAX request
+          $.getJSON(`https://fleminganalytic.com/shakespearewordclouds`, function(data) {
+                $('#booksDropdown').empty(); // Clear previous options
+                $('#booksDropdown').append($('<option></option>').attr('value', '').text('Select a work...'));
+                $.each(data, function(key, entry) {
+                    $('#booksDropdown').append($('<option></option>').attr('value', entry.Link).text(entry.Title));
+                });
+            });
+        
+
+        // Function to handle dropdown changes and update the image source
+        $('#booksDropdown').change(function() {
+            var link = $(this).val();
+            
+            $('#wordCloudImage').attr('src', `${link}`);
+            $('#wordCloudImage').attr('style', 'display:block;');
+        });
+    </script>
+</body>
+<footer>
+    <div class="container mt-5">
+        
+        <a href="https://fleminganalytic.com/contactus/Shakespeare WordClouds">Contact us</a>
+        <p>&copy; 2024 Shakespeare WordClouds</p>
+    </div>
+</html>

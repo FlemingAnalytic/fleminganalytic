@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Pages{% endblock %}
+{% block page_title %}Pages{% endblock %}
+
+{% block header_actions %}
+<a href="/stjohn/admin/pages/new" class="btn btn-primary">
+    <span class="material-icons">add</span> New Page
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Pages</h3>
+    </div>
+
+    {% if pages %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>URL</th>
+                <th>Status</th>
+                <th>Nav</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for page in pages %}
+            <tr>
+                <td>
+                    <strong>{{ page.title }}</strong>
+                    {% if page.subtitle %}
+                    <br><small style="color: var(--text-light);">{{ page.subtitle[:50] }}...</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/stjohn/{{ page.slug }}" target="_blank" class="api-endpoint">/stjohn/{{ page.slug }}</a>
+                </td>
+                <td>
+                    {% if page.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-warning">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if page.show_in_nav %}
+                    <span class="badge badge-info">{{ page.nav_order }}</span>
+                    {% else %}
+                    <span style="color: var(--text-light);">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="actions">
+                        <a href="/stjohn/admin/pages/{{ page.id }}/edit" class="btn btn-secondary btn-sm">
+                            <span class="material-icons">edit</span> Edit
+                        </a>
+                        <a href="/stjohn/{{ page.slug }}" target="_blank" class="btn btn-outline btn-sm">
+                            <span class="material-icons">visibility</span> View
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons">article</span>
+        <p>No pages yet.</p>
+        <a href="/stjohn/admin/pages/new" class="btn btn-primary">Create Your First Page</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Suggested Pages</h3>
+    </div>
+    <p style="color: var(--text-light); margin-bottom: 1rem;">
+        Create these pages to replace the external links:
+    </p>
+    <div class="quick-actions">
+        <a href="/stjohn/admin/pages/new?slug=ministry&title=Ministry" class="btn btn-outline">
+            <span class="material-icons">groups</span> Ministry
+        </a>
+        <a href="/stjohn/admin/pages/new?slug=worship&title=Worship" class="btn btn-outline">
+            <span class="material-icons">church</span> Worship
+        </a>
+        <a href="/stjohn/admin/pages/new?slug=about&title=About Us" class="btn btn-outline">
+            <span class="material-icons">info</span> About Us
+        </a>
+        <a href="/stjohn/admin/pages/new?slug=events&title=Events" class="btn btn-outline">
+            <span class="material-icons">event</span> Events
+        </a>
+    </div>
+</div>
+{% endblock %}

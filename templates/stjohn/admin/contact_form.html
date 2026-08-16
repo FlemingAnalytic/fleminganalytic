@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Information{% endblock %}
+{% block page_title %}Contact Information{% endblock %}
+
+{% block content %}
+<div class="card">
+    <form method="POST" action="/stjohn/admin/contact">
+        <h3 style="margin-bottom: 1rem; color: #374151;">Address</h3>
+
+        <div class="form-group">
+            <label for="address_line1">Address Line 1</label>
+            <input type="text" id="address_line1" name="address_line1" class="form-control"
+                   value="{{ contact.address_line1 if contact else '' }}" placeholder="2650 Plainfield Road">
+        </div>
+
+        <div class="form-group">
+            <label for="address_line2">Address Line 2</label>
+            <input type="text" id="address_line2" name="address_line2" class="form-control"
+                   value="{{ contact.address_line2 if contact else '' }}">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" class="form-control"
+                       value="{{ contact.city if contact else '' }}" placeholder="Joliet">
+            </div>
+
+            <div class="form-group">
+                <label for="state">State</label>
+                <input type="text" id="state" name="state" class="form-control"
+                       value="{{ contact.state if contact else '' }}" placeholder="IL">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="zip_code">ZIP Code</label>
+            <input type="text" id="zip_code" name="zip_code" class="form-control"
+                   value="{{ contact.zip_code if contact else '' }}" placeholder="60435" style="max-width: 200px;">
+        </div>
+
+        <h3 style="margin: 2rem 0 1rem; color: #374151;">Contact Details</h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" name="phone" class="form-control"
+                       value="{{ contact.phone if contact else '' }}" placeholder="815.439.2320">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control"
+                       value="{{ contact.email if contact else '' }}" placeholder="contact@stjohnjoliet.org">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="office_hours">Office Hours</label>
+            <input type="text" id="office_hours" name="office_hours" class="form-control"
+                   value="{{ contact.office_hours if contact else '' }}" placeholder="Monday - Friday: 9 AM - 4 PM">
+        </div>
+
+        <h3 style="margin: 2rem 0 1rem; color: #374151;">Social Media</h3>
+
+        <div class="form-group">
+            <label for="facebook_url">Facebook URL</label>
+            <input type="url" id="facebook_url" name="facebook_url" class="form-control"
+                   value="{{ contact.facebook_url if contact else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="youtube_url">YouTube URL</label>
+            <input type="url" id="youtube_url" name="youtube_url" class="form-control"
+                   value="{{ contact.youtube_url if contact else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="instagram_url">Instagram URL</label>
+            <input type="url" id="instagram_url" name="instagram_url" class="form-control"
+                   value="{{ contact.instagram_url if contact else '' }}">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

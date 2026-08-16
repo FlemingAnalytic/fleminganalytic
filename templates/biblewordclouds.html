@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible WordClouds</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+    </head>
+    
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="bg-primary text-light rounded mt-5 text-center">Bible WordClouds</h1>
+        <div class="form-check text-center">
+            <label style="margin-right: 10px;">
+            <input class="form-check-input" type="radio" name="testament" id="oldTestament" value="old">
+            <label class="form-check-label" for="oldTestament">
+                Old Testament
+            </label>
+        
+        <label style="margin-left: 30px;">
+        
+            <input class="form-check-input" type="radio" name="testament" id="newTestament" value="new">
+            <label class="form-check-label" for="newTestament">
+                New Testament
+            </label>
+        </div>
+        <select id="booksDropdown" class="form-control mt-3"></select>
+        <img id="wordCloudImage" src="" alt="Word Cloud Image" class="img-fluid mt-3 " style="display:none;width:400px ">
+    </div>
+
+    <script>
+        // Function to handle radio button changes and make an AJAX request
+        $('input[type="radio"][name="testament"]').change(function() {
+            var testament = $(this).val();
+            $.getJSON(`https://fleminganalytic.com/biblewordclouds/${testament}`, function(data) {
+                $('#booksDropdown').empty(); // Clear previous options
+                $('#booksDropdown').append($('<option></option>').attr('value', '').text('Select a book...'));
+                $.each(data, function(key, entry) {
+                    $('#booksDropdown').append($('<option></option>').attr('value', entry.link).text(entry.name));
+                });
+            });
+        });
+
+        // Function to handle dropdown changes and update the image source
+        $('#booksDropdown').change(function() {
+            var link = $(this).val();
+            var testament = $('input[type="radio"][name="testament"]:checked').val();
+            $('#wordCloudImage').attr('src', `${link}`);
+            $('#wordCloudImage').attr('style', 'display:block;');
+        });
+    </script>
+</body>
+<footer>
+    <div class="container mt-5">
+        
+        <a href="https://fleminganalytic.com/contactus/Bible WordClouds">Contact us</a>
+        <p>&copy; 2024 Bible WordClouds</p>
+    </div>
+</html>

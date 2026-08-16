@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{% if service %}Edit{% else %}New{% endif %} Service{% endblock %}
+{% block page_title %}{% if service %}Edit{% else %}New{% endif %} Worship Service{% endblock %}
+
+{% block content %}
+<div class="card">
+    <form method="POST" action="/stjohn/admin/services/{% if service %}{{ service.id }}/edit{% else %}new{% endif %}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="day">Day *</label>
+                <select id="day" name="day" class="form-control" required>
+                    <option value="Saturday" {% if service and service.day == 'Saturday' %}selected{% endif %}>Saturday</option>
+                    <option value="Sunday" {% if service and service.day == 'Sunday' %}selected{% endif %}>Sunday</option>
+                    <option value="Wednesday" {% if service and service.day == 'Wednesday' %}selected{% endif %}>Wednesday</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="time">Time *</label>
+                <input type="text" id="time" name="time" class="form-control"
+                       value="{{ service.time if service else '' }}" placeholder="5:30 PM" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="name">Service Name</label>
+                <input type="text" id="name" name="name" class="form-control"
+                       value="{{ service.name or '' if service else '' }}" placeholder="Traditional, Contemporary, etc.">
+            </div>
+
+            <div class="form-group">
+                <label for="sort_order">Sort Order</label>
+                <input type="number" id="sort_order" name="sort_order" class="form-control"
+                       value="{{ service.sort_order if service else 0 }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description (HTML Content)</label>
+            <textarea id="description" name="description" class="form-control wysiwyg"
+                      placeholder="Brief description of this service">{{ service.description or '' if service else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" id="livestream" name="livestream" value="true"
+                       {% if service and service.livestream %}checked{% endif %}>
+                <label for="livestream">Available via Livestream</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="livestream_url">Livestream URL</label>
+            <input type="url" id="livestream_url" name="livestream_url" class="form-control"
+                   value="{{ service.livestream_url or '' if service else '' }}"
+                   placeholder="https://youtube.com/...">
+        </div>
+
+        <div class="form-group">
+            <label for="bulletin_url">Bulletin PDF URL</label>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="bulletin_url" name="bulletin_url" class="form-control"
+                       value="{{ service.bulletin_url or '' if service else '' }}"
+                       placeholder="/static/stjohn/uploads/bulletin.pdf">
+                <button type="button" class="btn btn-secondary" onclick="openUploadModal('bulletin_url')">Upload</button>
+                <button type="button" class="btn btn-outline" onclick="openAssetPicker('bulletin_url')">Browse</button>
+            </div>
+        </div>
+
+        {% if service %}
+        <div class="form-group">
+            <div class="form-check">
+                <input type="checkbox" id="is_active" name="is_active" value="true"
+                       {% if service.is_active %}checked{% endif %}>
+                <label for="is_active">Active (visible on site)</label>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% if service %}Update{% else %}Create{% endif %} Service
+            </button>
+            <a href="/stjohn/admin/services" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

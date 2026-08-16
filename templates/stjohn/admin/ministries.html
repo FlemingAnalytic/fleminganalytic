@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Ministries{% endblock %}
+{% block page_title %}Ministries{% endblock %}
+
+{% block header_actions %}
+<a href="/stjohn/admin/ministries/new" class="btn btn-primary">
+    <span class="material-icons">add</span> Add Ministry
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    {% if ministries %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ministry in ministries %}
+            <tr>
+                <td>
+                    {% if ministry.icon %}
+                    <span class="material-icons">{{ ministry.icon }}</span>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td><strong>{{ ministry.name }}</strong></td>
+                <td style="max-width: 300px;">{{ (ministry.description[:100] + '...') if ministry.description and ministry.description|length > 100 else ministry.description or '-' }}</td>
+                <td>
+                    {% if ministry.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inactive</span>
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <a href="/stjohn/admin/ministries/{{ ministry.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
+                    <form method="POST" action="/stjohn/admin/ministries/{{ ministry.id }}/delete" style="display:inline;"
+                          onsubmit="return confirm('Delete this ministry?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <span class="material-icons">groups</span>
+        <p>No ministries yet.</p>
+        <a href="/stjohn/admin/ministries/new" class="btn btn-primary">Add First Ministry</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

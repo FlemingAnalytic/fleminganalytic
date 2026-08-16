@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}Asset Library{% endblock %}
+{% block page_title %}Asset Library{% endblock %}
+
+{% block content %}
+<style>
+    .asset-tabs {
+        display: flex;
+        gap: 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--gray-200);
+    }
+    .asset-tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-light);
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all var(--transition);
+        background: none;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        font-family: 'Open Sans', sans-serif;
+    }
+    .asset-tab:hover {
+        color: var(--primary);
+        background: var(--bg-alt);
+    }
+    .asset-tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--secondary);
+    }
+    .asset-tab .count {
+        background: var(--gray-200);
+        color: var(--text-light);
+        padding: 0.1rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+    }
+    .asset-tab.active .count {
+        background: var(--secondary);
+        color: var(--primary);
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .asset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+    .asset-card {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all var(--transition);
+    }
+    .asset-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    .asset-preview {
+        width: 100%;
+        height: 150px;
+        background: var(--bg-alt);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .asset-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+    }
+    .asset-info {
+        padding: 1rem;
+    }
+    .asset-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+        word-break: break-all;
+    }
+    .asset-meta {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        margin-bottom: 0.5rem;
+    }
+    .asset-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Upload & Manage Assets</h3>
+        <button onclick="openUploadModal()" class="btn btn-primary">
+            <span class="material-icons">cloud_upload</span> Upload New Asset
+        </button>
+    </div>
+
+    <!-- Upload Section -->
+    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px;">
+        <h4 style="color: var(--primary); margin-bottom: 1rem;">Quick Upload</h4>
+        <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px;">
+                <label class="form-label">Select File</label>
+                <input type="file" id="quickUploadFile" class="form-control" accept="image/*,.pdf,.html,.htm" style="margin-bottom: 0;">
+            </div>
+            <button onclick="handleQuickUpload()" class="btn btn-primary" id="quickUploadBtn">
+                <span class="material-icons">upload</span> Upload
+            </button>
+        </div>
+        <div id="uploadStatus" style="margin-top: 1rem; display: none; padding: 1rem; background: white; border-left: 3px solid var(--success); border-radius: 4px;">
+            <small id="uploadStatusText"></small>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="asset-tabs">
+        <button class="asset-tab active" onclick="switchTab('images', this)">
+            <span class="material-icons" style="font-size:1.1rem;">image</span> Images
+            <span class="count">{{ images|length }}</span>
+        </button>
+        <button class="asset-tab" onclick="switchTab('pdfs', this)">
+            <span class="material-icons" style="font-size:1.1rem;">picture_as_pdf</span> PDFs
+            <span class="count">{{ pdfs|length }}</span>
+        </button>
+        <button class="asset-tab" onclick="switchTab('htmls', this)">
+            <span class="material-icons" style="font-size:1.1rem;">code</span> HTML
+            <span class="count">{{ htmls|length }}</span>
+        </button>
+    </div>
+
+    <!-- Images Tab -->
+    <div class="tab-pane active" id="tab-images">
+        {% if images %}
+        <div class="asset-grid">
+            {% for asset in images %}
+            <div class="asset-card">
+                <div class="asset-preview">
+                    <img src="{{ asset.url }}" alt="{{ asset.filename }}">
+                </div>
+                <div class="asset-info">
+                    <p class="asset-name">{{ asset.filename }}</p>
+                    <p class="asset-meta">{{ asset.size_mb|round(2) }} MB &bull; {{ asset.date }}</p>
+                    <div class="asset-actions">
+                        <a href="/stjohn/admin/image-editor?src={{ asset.url }}&filename={{ asset.filename }}" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;">
+                            <span class="material-icons" style="font-size: 1rem;">edit</span> Edit
+                        </a>
+                        <button onclick="copyAssetUrl('{{ asset.url }}')" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center;">
+                            <span class="material-icons" style="font-size: 1rem;">link</span> Copy
+                        </button>
+                        <button onclick="deleteAsset('{{ asset.filename }}')" class="btn btn-danger btn-sm" title="Delete">
+                            <span class="material-icons" style="font-size: 1rem;">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-icons">image</span>
+            <p>No images uploaded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- PDFs Tab -->
+    <div class="tab-pane" id="tab-pdfs">
+        {% if pdfs %}
+        <div class="asset-grid">
+            {% for asset in pdfs %}
+            <div class="asset-card">
+                <div class="asset-preview" style="color: var(--danger);">
+                    <span class="material-icons" style="font-size: 3rem;">picture_as_pdf</span>
+                </div>
+                <div class="asset-info">
+                    <p class="asset-name">{{ asset.filename }}</p>
+                    <p class="asset-meta">{{ asset.size_mb|round(2) }} MB &bull; {{ asset.date }}</p>
+                    <div class="asset-actions">
+                        <a href="{{ asset.url }}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;">
+                            <span class="material-icons" style="font-size: 1rem;">open_in_new</span> View
+                        </a>
+                        <button onclick="copyAssetUrl('{{ asset.url }}')" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center;">
+                            <span class="material-icons" style="font-size: 1rem;">link</span> Copy
+                        </button>
+                        <button onclick="deleteAsset('{{ asset.filename }}')" class="btn btn-danger btn-sm" title="Delete">
+                            <span class="material-icons" style="font-size: 1rem;">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-icons">picture_as_pdf</span>
+            <p>No PDFs uploaded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- HTML Tab -->
+    <div class="tab-pane" id="tab-htmls">
+        {% if htmls %}
+        <div class="asset-grid">
+            {% for asset in htmls %}
+            <div class="asset-card">
+                <div class="asset-preview" style="color: var(--primary);">
+                    <span class="material-icons" style="font-size: 3rem;">code</span>
+                </div>
+                <div class="asset-info">
+                    <p class="asset-name">{{ asset.filename }}</p>
+                    <p class="asset-meta">{{ asset.size_mb|round(2) }} MB &bull; {{ asset.date }}</p>
+                    <div class="asset-actions">
+                        <a href="{{ asset.url }}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1; justify-content: center;">
+                            <span class="material-icons" style="font-size: 1rem;">open_in_new</span> View
+                        </a>
+                        <button onclick="copyAssetUrl('{{ asset.url }}')" class="btn btn-secondary btn-sm" style="flex: 1; justify-content: center;">
+                            <span class="material-icons" style="font-size: 1rem;">link</span> Copy
+                        </button>
+                        <button onclick="deleteAsset('{{ asset.filename }}')" class="btn btn-danger btn-sm" title="Delete">
+                            <span class="material-icons" style="font-size: 1rem;">delete</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="material-icons">code</span>
+            <p>No HTML files uploaded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="assetUploadModal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div class="card" style="width: 500px; max-width: 90%;">
+        <div class="card-header">
+            <h3 class="card-title">Upload Asset</h3>
+            <span class="material-icons" style="cursor:pointer;" onclick="closeAssetUploadModal()">close</span>
+        </div>
+        <div style="padding: 1.5rem;">
+            <input type="file" id="assetUploadFile" class="form-control" accept="image/*,.pdf,.html,.htm" style="margin-bottom: 1rem;">
+            <button onclick="handleAssetUpload()" class="btn btn-primary" style="width:100%; justify-content:center;" id="assetUploadBtn">Upload</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.asset-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    btn.classList.add('active');
+}
+
+let assetUploadInProgress = false;
+
+function openUploadModal() {
+    document.getElementById('assetUploadModal').style.display = 'flex';
+}
+
+function closeAssetUploadModal() {
+    document.getElementById('assetUploadModal').style.display = 'none';
+    document.getElementById('assetUploadFile').value = '';
+}
+
+function handleQuickUpload() {
+    const fileInput = document.getElementById('quickUploadFile');
+    const statusDiv = document.getElementById('uploadStatus');
+    const statusText = document.getElementById('uploadStatusText');
+    const btn = document.getElementById('quickUploadBtn');
+
+    if (!fileInput.files[0]) {
+        alert('Please select a file');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons">hourglass_empty</span> Uploading...';
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    fetch('/stjohn/admin/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.location) {
+            statusText.innerHTML = `&#10003; File uploaded: <strong>${fileInput.files[0].name}</strong>${data.result[0].compression_msg || ''}<br><small>URL: ${data.location}</small>`;
+            statusDiv.style.display = 'block';
+            fileInput.value = '';
+            btn.innerHTML = '<span class="material-icons">upload</span> Upload';
+            btn.disabled = false;
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+            btn.innerHTML = '<span class="material-icons">upload</span> Upload';
+            btn.disabled = false;
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error uploading file: ' + err.message);
+        btn.innerHTML = '<span class="material-icons">upload</span> Upload';
+        btn.disabled = false;
+    });
+}
+
+function handleAssetUpload() {
+    const fileInput = document.getElementById('assetUploadFile');
+    const btn = document.getElementById('assetUploadBtn');
+
+    if (!fileInput.files[0]) {
+        alert('Please select a file');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = 'Uploading...';
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    fetch('/stjohn/admin/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.location) {
+            alert('File uploaded successfully!');
+            closeAssetUploadModal();
+            location.reload();
+        } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerHTML = 'Upload';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error uploading file');
+        btn.disabled = false;
+        btn.innerHTML = 'Upload';
+    });
+}
+
+function copyAssetUrl(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        alert('URL copied: ' + url);
+    }).catch(() => {
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        alert('URL copied: ' + url);
+    });
+}
+
+function deleteAsset(filename) {
+    if (confirm('Delete this asset? This action cannot be undone.')) {
+        const formData = new FormData();
+        formData.append('filename', filename);
+
+        fetch('/stjohn/admin/delete-asset', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('Asset deleted');
+                location.reload();
+            } else {
+                alert('Delete failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(err => {
+            alert('Error deleting asset');
+            console.error(err);
+        });
+    }
+}
+</script>
+{% endblock %}
