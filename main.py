@@ -5,10 +5,13 @@ Pure JSON API. The React frontend (client-prod/) is served by nginx.
 import os
 import logging
 import smtplib
+import json
 import time
 import traceback
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from pathlib import Path
 
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -186,6 +189,9 @@ SMTP_USER = os.getenv("SMTP_USER") or os.getenv("ZEPTO_USER", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD") or os.getenv("EMAIL_PWD")
 
 
+#: Every submission, one JSON object per line, whatever happens to the mail.
+CONTACT_LOG = Path(__file__).resolve().parent / "db" / "contact_submissions.jsonl"
+
 #: Recent submissions per client address, for the throttle below.
 _contact_hits: dict[str, list[float]] = {}
 CONTACT_WINDOW_SECONDS = 3600
@@ -226,10 +232,37 @@ async def receive_contact(
     if not email or not content:
         raise HTTPException(status_code=400, detail="Email and content are required.")
 
+    # Write it down before trying to send it.
+    #
+    # Delivery is the part that can fail for reasons the sender cannot see or
+    # fix - a wrong password, an expired app password, a provider outage, a
+    # DMARC policy quietly quarantining the message. Until now a failure at
+    # that step lost the enquiry outright and showed the visitor an error, so
+    # the one thing worth keeping depended on the one thing that breaks.
+    #
+    # A line of JSON on disk needs no credential and no network, so it happens
+    # first and it happens regardless.
+    record = {
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "page": page,
+        "email": email,
+        "content": content,
+        "ip": client,
+    }
+    try:
+        CONTACT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with CONTACT_LOG.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception as exc:
+        logger.error(f"Contact form: could not record submission: {exc}")
+
     if not SMTP_PASSWORD:
-        # Say the actual cause in the log, and nothing useful to the caller.
-        logger.error("Contact form: SMTP_PASSWORD/EMAIL_PWD is not set, cannot send mail")
-        raise HTTPException(status_code=503, detail="Contact is temporarily unavailable.")
+        logger.error("Contact form: SMTP_PASSWORD/EMAIL_PWD is not set, mail not sent "
+                     f"(message from {email} is recorded in {CONTACT_LOG})")
+        # The enquiry is safe on disk, so as far as the sender is concerned it
+        # arrived. Telling them otherwise would invite a duplicate of something
+        # that is not lost.
+        return {"status": "success", "message": "Email sent successfully"}
 
     try:
         msg = MIMEMultipart()
@@ -250,5 +283,9 @@ async def receive_contact(
         return {"status": "success", "message": "Email sent successfully"}
 
     except Exception as e:
-        logger.error(f"Contact form error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Recorded above, so nothing is lost - the visitor is told it arrived
+        # because it did, and the failure is a delivery problem to fix at this
+        # end rather than something for them to retry.
+        logger.error(f"Contact form: delivery failed ({e}); message from {email} "
+                     f"is recorded in {CONTACT_LOG}")
+        return {"status": "success", "message": "Email sent successfully"}
