@@ -9,6 +9,8 @@ import AnalystLab from './pages/AnalystLab'
 import AstroIntelligence from './pages/AstroIntelligence'
 import RestaurantManager from './pages/RestaurantManager'
 import StJohnAdmin from './pages/StJohnAdmin'
+import Approach from './pages/Approach'
+import Contact from './pages/Contact'
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
             <Route path="/astro" element={<AstroIntelligence />} />
             <Route path="/restaurant" element={<RestaurantManager />} />
             <Route path="/stjohn" element={<StJohnAdmin />} />
+            <Route path="/approach" element={<Approach />} />
+            <Route path="/contact" element={<Contact />} />
           </Routes>
         </div>
       </div>

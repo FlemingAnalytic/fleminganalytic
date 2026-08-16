@@ -54,6 +54,25 @@ export const chatApi = {
 };
 
 /**
+ * Contact
+ *
+ * The server has accepted these three fields all along; nothing on the site
+ * ever sent them. `website` is a honeypot - the form renders it hidden and
+ * off the tab order, a person never fills it in, and a submission carrying a
+ * value is dropped server-side.
+ */
+export const contactApi = {
+  send: ({ page, email, content, website = '' }) => {
+    const formData = new FormData();
+    formData.append('page', page);
+    formData.append('email', email);
+    formData.append('content', content);
+    formData.append('website', website);
+    return apiClient.post('/contact', formData);
+  },
+};
+
+/**
  * Smart Analyst API
  */
 export const analystApi = {
