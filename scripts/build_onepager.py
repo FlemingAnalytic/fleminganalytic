@@ -174,7 +174,7 @@ def build_html() -> str:
       <h2>Bring us the one you wouldn't sign.</h2>
       <p>The job that eats a day a week. The report nobody trusts. One conversation, no
       charge, and a straight answer about whether this is worth doing at all.</p>
-      <div class="contact">fleminganalytic.com &nbsp;·&nbsp; fleminganalytic@gmail.com</div>
+      <div class="contact">fleminganalytic.com &nbsp;·&nbsp; john.fleming@fleminganalytic.com</div>
     </div>
     <div class="qr">
       <div class="frame">{qr_svg(TARGET_URL)}</div>
