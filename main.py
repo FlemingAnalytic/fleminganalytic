@@ -37,7 +37,6 @@ from apps.trading import router as trading_router
 
 # Import existing routers
 from apps.astro.astro_router import astro_router
-from apps.astro.printify_router import printify_router
 from chessapi import router as chess_router
 from apps.analyst.router import router as analyst_router
 from apps.restaurant import router as restaurant_router
@@ -133,7 +132,6 @@ app.include_router(trading_router)
 
 # Existing routers
 app.include_router(astro_router)
-# app.include_router(printify_router)  # Hidden - not in use
 app.include_router(chess_router, prefix="/chess")
 app.include_router(analyst_router, prefix="/analyst")
 app.include_router(restaurant_router, prefix="/food")

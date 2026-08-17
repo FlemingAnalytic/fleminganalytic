@@ -3,6 +3,7 @@
 # Refactored for production server deployment with FastAPI router
 # =============================================================================
 
+import logging
 import os
 import json
 import uuid
@@ -31,7 +32,7 @@ import pickle
 from scipy import stats
 
 from fastapi import APIRouter, UploadFile, File, Request, HTTPException, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from pydantic import BaseModel
 
 warnings.filterwarnings('ignore')
@@ -1705,10 +1706,129 @@ class JoinCensusRequest(BaseModel):
 # =============================================================================
 # ROUTER
 # =============================================================================
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Analyst"])
 
 # Session storage
 sessions = {}
+
+
+#: Classification specs, so a derived column can be replayed onto a rebuilt
+#: session. Without this a classification made in one worker is invisible to
+#: the next request, which is what kept gunicorn pinned to a single worker.
+CLASSIFICATIONS_FILE = os.path.join(os.path.dirname(__file__), "classifications.json")
+
+
+def _classification_specs() -> dict:
+    try:
+        with open(CLASSIFICATIONS_FILE) as fh:
+            return json.load(fh)
+    except Exception:
+        return {}
+
+
+def _record_classification(session_name: str, spec: dict) -> None:
+    specs = _classification_specs()
+    specs.setdefault(session_name, [])
+    specs[session_name] = [s for s in specs[session_name] if s["new_name"] != spec["new_name"]]
+    specs[session_name].append(spec)
+    try:
+        with open(CLASSIFICATIONS_FILE, "w") as fh:
+            json.dump(specs, fh, indent=2)
+    except Exception as exc:
+        logger.warning(f"analyst: could not record classification: {exc}")
+
+
+def make_classification(df: pd.DataFrame, column: str, method: str, params: dict):
+    """Derive a column. Deterministic, so replaying it gives the same result."""
+    series = df[column]
+    if method == "quintiles":
+        return ColumnClassifier.quintiles(series)
+    if method == "quartiles":
+        return ColumnClassifier.quartiles(series)
+    if method == "deciles":
+        return ColumnClassifier.deciles(series)
+    if method == "statistical":
+        return ColumnClassifier.statistical_class(series)
+    if method == "kmeans":
+        numeric = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+        return ColumnClassifier.kmeans_cluster(df, numeric, params.get("n_clusters", 4))
+    raise HTTPException(status_code=400, detail=f"Unknown method: {method}")
+
+
+def build_session(df: pd.DataFrame) -> dict:
+    """The five things every loader puts in a session, in one place."""
+    profiler = DataProfiler(df)
+    return {
+        "df": df,
+        "profile": profiler.run_full_profile(),
+        "classifications": {},
+        "pivot_engine": PivotEngine(df),
+        "model_engine": None,
+    }
+
+
+def get_session(name: str) -> dict:
+    """A loaded dataset, rebuilt from disk if this process has not got it.
+
+    `sessions` is a module-level dict, so it belongs to one worker process
+    and disappears on restart. That produced two bad behaviours: a restart
+    made every open report fail with "dataset not found" until the user
+    happened to reload it, and it forced gunicorn to a single worker, since
+    a second one would answer requests about data it had never seen. Every
+    request to every application on this domain therefore queued behind one
+    process.
+
+    The dict is really a cache, not state: the session key says where the
+    data came from, so it can be rebuilt. Treating it as a cache that
+    repopulates itself makes a restart invisible and makes more than one
+    worker safe for the read paths.
+
+    What is not rebuilt is anything a request added afterwards - a
+    classification, an applied filter. Those live only in the process that
+    created them, which is a real limit and the reason this returns a clear
+    404 rather than silently handing back a session missing them.
+    """
+    if name in sessions:
+        return sessions[name]
+
+    df = None
+    if name.startswith("saved_"):
+        base = name[len("saved_"):]
+        for ext in (".csv", ".txt", ".xlsx", ".xls"):
+            path = os.path.join(SAVED_DATA_DIR, base + ext)
+            if os.path.exists(path):
+                if ext in (".xlsx", ".xls"):
+                    df = pd.read_excel(path)
+                else:
+                    with open(path, "rb") as fh:
+                        quoted = detect_quoted_columns(fh.read())
+                    df = pd.read_csv(path, sep="\t" if ext == ".txt" else ",",
+                                     dtype={c: str for c in quoted} or None,
+                                     low_memory=False)
+                break
+    elif name in PUBLIC_DATASETS:
+        df = load_public_dataset(name)
+
+    if df is None:
+        raise HTTPException(
+            status_code=404,
+            detail="That dataset is not loaded any more. Open it again from the list.",
+        )
+
+    logger.info(f"analyst: rebuilt session {name} from disk")
+    session = build_session(df)
+    for spec in _classification_specs().get(name, []):
+        try:
+            result = make_classification(session["df"], spec["column"], spec["method"],
+                                         spec.get("params") or {})
+            session["classifications"][spec["new_name"]] = result
+            session["pivot_engine"].add_classification(spec["new_name"], result)
+        except Exception as exc:
+            logger.warning(f"analyst: could not replay classification "
+                           f"{spec.get('new_name')}: {exc}")
+    sessions[name] = session
+    return session
 
 
 def get_library():
@@ -1725,11 +1845,17 @@ def save_library(library):
         json.dump(library, f, indent=2)
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/")
 async def smart_analyst_home():
-    """Serve the Smart Analyst frontend"""
-    from .frontend import HTML_TEMPLATE
-    return HTMLResponse(content=HTML_TEMPLATE)
+    """Send visitors to the analyst, which is now the React report canvas.
+
+    This used to return frontend.py - 1,890 lines of HTML in a Python string
+    holding a second, older analyst UI. Two interfaces over one API meant two
+    places to change for every feature and one of them silently rotting; it
+    had no traffic at all. The endpoints below are untouched, and this URL
+    keeps working rather than becoming a 404 in somebody's bookmarks.
+    """
+    return RedirectResponse("https://fleminganalytic.com/analyst", status_code=308)
 
 
 @router.get("/library")
@@ -2000,10 +2126,7 @@ async def load_url(url: str = Form(...)):
 @router.post("/classify")
 async def classify_column(request: ClassifyRequest):
     """Create a new classification column"""
-    if request.filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[request.filename]
+    session = get_session(request.filename)
     df = session["df"]
 
     if request.column not in df.columns:
@@ -2012,23 +2135,15 @@ async def classify_column(request: ClassifyRequest):
     series = df[request.column]
 
     try:
-        if request.method == "quintiles":
-            result = ColumnClassifier.quintiles(series)
-        elif request.method == "quartiles":
-            result = ColumnClassifier.quartiles(series)
-        elif request.method == "deciles":
-            result = ColumnClassifier.deciles(series)
-        elif request.method == "statistical":
-            result = ColumnClassifier.statistical_class(series)
-        elif request.method == "kmeans":
-            n_clusters = request.params.get("n_clusters", 4)
-            numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
-            result = ColumnClassifier.kmeans_cluster(df, numeric_cols, n_clusters)
-        else:
-            raise HTTPException(status_code=400, detail=f"Unknown method: {request.method}")
+        result = make_classification(df, request.column, request.method, request.params or {})
 
         session["classifications"][request.new_name] = result
         session["pivot_engine"].add_classification(request.new_name, result)
+        # Recorded so another worker, or this one after a restart, can replay it.
+        _record_classification(request.filename, {
+            "column": request.column, "method": request.method,
+            "params": request.params or {}, "new_name": request.new_name,
+        })
 
         # Get distribution of the new classification
         dist = result.value_counts().to_dict()
@@ -2046,10 +2161,7 @@ async def classify_column(request: ClassifyRequest):
 @router.post("/pivot")
 async def create_pivot(request: PivotRequest):
     """Create a pivot table"""
-    if request.filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[request.filename]
+    session = get_session(request.filename)
     pivot_engine = session["pivot_engine"]
 
     result = pivot_engine.create_pivot(
@@ -2067,10 +2179,7 @@ async def create_pivot(request: PivotRequest):
 @router.post("/visualize")
 async def create_visualization(request: VizRequest):
     """Create a visualization"""
-    if request.filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[request.filename]
+    session = get_session(request.filename)
     df = session["df"]
 
     try:
@@ -2128,10 +2237,7 @@ async def create_visualization(request: VizRequest):
 @router.post("/apply-filter")
 async def apply_filter(filename: str = Form(...), column: str = Form(...), values: str = Form(...)):
     """Filter the session dataset in-place. values is a JSON array of allowed values."""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     df = session["df"]
 
     if column not in df.columns:
@@ -2183,10 +2289,7 @@ async def apply_filter(filename: str = Form(...), column: str = Form(...), value
 @router.post("/reset-filter")
 async def reset_filter(filename: str = Form(...)):
     """Reset dataset to original (unfiltered) state."""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     if "original_df" not in session:
         return {"success": True, "message": "No filter to reset"}
 
@@ -2211,10 +2314,7 @@ async def reset_filter(filename: str = Form(...)):
 @router.post("/filter-values")
 async def get_filter_values(request: FilterValuesRequest):
     """Get unique values for a column (for filters)"""
-    if request.filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[request.filename]
+    session = get_session(request.filename)
     df = session["df"]
 
     # Include classifications
@@ -2234,10 +2334,7 @@ async def get_filter_values(request: FilterValuesRequest):
 @router.get("/columns/{filename}")
 async def get_columns(filename: str):
     """Get column information for a dataset"""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     profile = session["profile"]
     classifications = list(session["classifications"].keys())
 
@@ -2250,10 +2347,7 @@ async def get_columns(filename: str):
 @router.post("/analyze-features")
 async def analyze_features(filename: str = Form(...), target: str = Form(...)):
     """Analyze feature importance for a target variable"""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     df = session["df"]
 
     try:
@@ -2273,10 +2367,7 @@ async def train_model(
     model_type: str = Form("random_forest")
 ):
     """Train a predictive model"""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     df = session["df"]
 
     feature_list = [f.strip() for f in features.split(",")]
@@ -2293,10 +2384,7 @@ async def train_model(
 @router.post("/predict")
 async def make_prediction(filename: str = Form(...), input_data: str = Form(...)):
     """Make a prediction using the trained model"""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     model_engine = session.get("model_engine")
 
     if not model_engine or not model_engine.model:
@@ -2313,10 +2401,7 @@ async def make_prediction(filename: str = Form(...), input_data: str = Form(...)
 @router.post("/model-summary")
 async def get_model_summary(filename: str = Form(...)):
     """Generate an AI executive summary for the trained model"""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     model_engine = session.get("model_engine")
 
     if not model_engine or not model_engine.model_stats:
@@ -2378,10 +2463,7 @@ async def get_model_summary(filename: str = Form(...)):
 @router.post("/join-census")
 async def join_census_data(req: JoinCensusRequest):
     """Join the current dataset with comprehensive Census Bureau demographics"""
-    if req.filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[req.filename]
+    session = get_session(req.filename)
     df = session["df"].copy()
 
     try:
@@ -2512,10 +2594,7 @@ async def join_census_data(req: JoinCensusRequest):
 
 async def export_data(filename: str, format: str = "csv"):
     """Export the current dataset"""
-    if filename not in sessions:
-        raise HTTPException(status_code=404, detail="Dataset not found in session")
-
-    session = sessions[filename]
+    session = get_session(filename)
     df = session["df"].copy()
 
     # Add classifications
