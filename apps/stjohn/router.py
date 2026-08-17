@@ -15,6 +15,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import bcrypt
 
+from apps.session_store import SessionStore
+
 try:
     from pypdf import PdfWriter, PdfReader
 except ImportError:
@@ -29,9 +31,18 @@ from .models import (
 router = APIRouter(prefix="/stjohn/admin", tags=["St. John CMS"])
 templates = Jinja2Templates(directory="templates/stjohn/admin")
 
-# Simple session storage (in production, use Redis or database sessions)
-sessions = {}
 SESSION_DURATION = timedelta(hours=8)
+
+# Login sessions live in SQLite, not in this process's memory.
+#
+# As a module-global dict they existed only inside the worker that handled the
+# login, so a second worker would have logged the user straight back out on
+# their next click - and it would have looked like a random session timeout
+# rather than a bug. That is one of the two reasons the whole domain ran at
+# `workers = 1`.
+#
+# A restart also used to log everybody out. It no longer does.
+sessions = SessionStore("stjohn_login", ttl_seconds=SESSION_DURATION.total_seconds())
 
 
 def hash_password(password: str) -> str:
@@ -47,12 +58,13 @@ def verify_password(password: str, hashed: str) -> bool:
 def get_session_user(request: Request, db: Session = Depends(get_db)) -> Optional[AdminUser]:
     """Get the current logged-in user from session."""
     session_id = request.cookies.get("stjohn_session")
-    if not session_id or session_id not in sessions:
+    if not session_id:
         return None
 
-    session_data = sessions[session_id]
-    if datetime.utcnow() > session_data["expires"]:
-        del sessions[session_id]
+    # The store enforces the deadline itself and returns nothing once it has
+    # passed, so there is no separate expiry check to keep in step with it.
+    session_data = sessions.get(session_id)
+    if session_data is None:
         return None
 
     user = db.query(AdminUser).filter(AdminUser.id == session_data["user_id"]).first()
@@ -231,10 +243,7 @@ async def login(
 
     # Create session
     session_id = secrets.token_urlsafe(32)
-    sessions[session_id] = {
-        "user_id": user.id,
-        "expires": datetime.utcnow() + SESSION_DURATION
-    }
+    sessions.create(session_id, {"user_id": user.id})
 
     # Update last login
     user.last_login = datetime.utcnow()
@@ -249,8 +258,8 @@ async def login(
 async def logout(request: Request):
     """Logout and clear session."""
     session_id = request.cookies.get("stjohn_session")
-    if session_id and session_id in sessions:
-        del sessions[session_id]
+    if session_id:
+        sessions.delete(session_id)
 
     response = RedirectResponse(url="/stjohn/admin/login", status_code=303)
     response.delete_cookie("stjohn_session")

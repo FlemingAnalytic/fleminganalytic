@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 import io
 import random  # Added for DB probability
 import os  # Added for PGN file check
+from contextlib import contextmanager
+
+from apps.session_store import SessionStore, SessionConflict
 
 # Piece-Square Table definitions (from Stockfish-like evaluations)
 # All tables are defined for White's pieces.
@@ -99,11 +102,80 @@ router = APIRouter(
     tags=["Chess API"],
 )
 
-# In-memory storage for game sessions (in production, use a database)
-game_sessions: Dict[str, dict] = {}
-
 # Session expiration time (1 hour)
 SESSION_EXPIRATION_HOURS = 1
+
+# Game sessions live in SQLite, not in this process's memory.
+#
+# They used to be a module-global dict, which meant a game only existed inside
+# the one worker that created it. That is why the whole domain ran at
+# `workers = 1`: with a second worker, every other move would 404 because it
+# landed on the process that had never heard of the game.
+#
+# The board is stored as its move list and replayed on load, not as a FEN.
+# A FEN describes a position, not how it was reached, so restoring from one
+# would silently break threefold repetition and the fifty-move rule - the game
+# would still look right and would draw incorrectly.
+game_sessions = SessionStore("chess", ttl_seconds=SESSION_EXPIRATION_HOURS * 3600)
+
+
+def _hydrate(data: dict) -> dict:
+    """Stored JSON -> a live session with a real chess.Board."""
+    board = chess.Board()
+    for uci in data.get("moves_uci", []):
+        board.push(chess.Move.from_uci(uci))
+    session = dict(data)
+    session["board"] = board
+    session["created_at"] = datetime.fromisoformat(data["created_at"])
+    session["last_activity"] = datetime.fromisoformat(data["last_activity"])
+    return session
+
+
+def _dehydrate(session: dict) -> dict:
+    """A live session -> JSON-safe storage form."""
+    board = session["board"]
+    return {
+        "moves_uci": [m.uci() for m in board.move_stack],
+        "player_color": session["player_color"],
+        "ai_difficulty": session["ai_difficulty"],
+        "move_history": session["move_history"],
+        "created_at": session["created_at"].isoformat(),
+        "last_activity": datetime.now().isoformat(),
+        "status": session["status"],
+    }
+
+
+@contextmanager
+def open_game(session_id: str):
+    """Load a game, let the handler play into it, save it back on a clean exit.
+
+    A handler that raises writes nothing, so a rejected move cannot leave the
+    board half-updated.
+    """
+    try:
+        with game_sessions.checkout(session_id) as data:
+            session = _hydrate(data)
+            yield session
+            data.clear()
+            data.update(_dehydrate(session))
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Game session not found")
+    except SessionConflict:
+        # Two moves for the same game arrived at once - a double-click, or the
+        # same game open in two tabs. Saying so is better than quietly losing
+        # one of them, which is what the old shared dict did.
+        raise HTTPException(
+            status_code=409,
+            detail="That game was updated by another request. Reload the board and try again.",
+        )
+
+
+def read_game(session_id: str) -> dict:
+    """Load a game read-only. Use open_game if you intend to change it."""
+    data = game_sessions.get(session_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Game session not found")
+    return _hydrate(data)
 
 # Enhanced ChessMoveDatabase class with move statistics and win rates
 class ChessMoveDatabase:
@@ -319,24 +391,16 @@ def load_games_for_replay(pgn_file_path='chessapi/openings.pgn', max_games=5000)
 load_games_for_replay()
 
 def cleanup_expired_sessions():
-    """Remove game sessions that have been inactive for more than SESSION_EXPIRATION_HOURS"""
-    current_time = datetime.now()
-    expired_sessions = []
-    
-    for session_id, session in game_sessions.items():
-        last_activity = session.get("last_activity", session.get("created_at"))
-        if current_time - last_activity > timedelta(hours=SESSION_EXPIRATION_HOURS):
-            expired_sessions.append(session_id)
-    
-    for session_id in expired_sessions:
-        del game_sessions[session_id]
-    
-    return len(expired_sessions)
+    """Drop games untouched for more than SESSION_EXPIRATION_HOURS.
+
+    The store already refuses to return an expired session, so this is only
+    reclaiming disk. It no longer has to walk every game in memory to do it.
+    """
+    return game_sessions.purge_expired()
 
 def update_session_activity(session_id: str):
-    """Update the last_activity timestamp for a session"""
-    if session_id in game_sessions:
-        game_sessions[session_id]["last_activity"] = datetime.now()
+    """Push the expiry out. A cheap UPDATE - it does not rewrite the board."""
+    game_sessions.touch(session_id)
 
 # Pydantic models for API requests/responses
 class NewGameRequest(BaseModel):
@@ -375,6 +439,8 @@ class MoveResponse(BaseModel):
     game_state: GameState
     message: str
     ai_move: Optional[str] = None
+    ai_from_square: Optional[str] = None  # NEW: For flash animation
+    ai_to_square: Optional[str] = None    # NEW: For flash animation
 
 def parse_move_notation(move_str: str, board: chess.Board) -> chess.Move:
     """
@@ -983,151 +1049,153 @@ async def new_game(request: NewGameRequest):
         "last_activity": datetime.now(),
         "status": "active"
     }
-    game_sessions[session_id] = game_session
+    game_sessions.create(session_id, _dehydrate(game_session))
     game_state = create_game_state(session_id, board, session_data=game_session)
     game_state.move_history = game_session["move_history"]
     return game_state
 
 @router.post("/make_move", response_model=MoveResponse)
 async def make_move(request: MoveRequest):
-    if request.session_id not in game_sessions:
-        raise HTTPException(status_code=404, detail="Game session not found")
-    
-    # Update session activity timestamp
-    update_session_activity(request.session_id)
-    session = game_sessions[request.session_id]
-    board = session["board"]
-    if board.is_game_over():
-        raise HTTPException(status_code=400, detail="Game is already over")
-    try:
-        move = parse_move_notation(request.move, board)
-        if move not in board.legal_moves:
-            raise HTTPException(status_code=400, detail=f"Illegal move: {request.move}")
-        san_move = board.san(move)
-        board.push(move)
-        session["move_history"].append(san_move)
-        game_state = create_game_state(request.session_id, board, san_move, session)
-        game_state.move_history = session["move_history"]
-        ai_move = None
-        message = f"Move {san_move} played successfully"
+    with open_game(request.session_id) as session:
+        board = session["board"]
         if board.is_game_over():
-            if board.is_checkmate():
-                winner = "Black" if board.turn == chess.WHITE else "White"
-                message += f". Checkmate! {winner} wins!"
-                session["status"] = "finished"
-            elif board.is_stalemate():
-                message += ". Stalemate! It's a draw."
-                session["status"] = "finished"
-            elif board.is_insufficient_material():
-                message += ". Draw due to insufficient material."
-                session["status"] = "finished"
-        else:
-            current_player_color = "white" if board.turn == chess.WHITE else "black"
-            if current_player_color != session["player_color"]:
-                ai_move_san, _ = get_ai_move(board, session["ai_difficulty"])  # MODIFIED: Ignore is_db here
-                if ai_move_san:
-                    try:
-                        ai_move_obj = board.parse_san(ai_move_san)
-                        board.push(ai_move_obj)
-                        session["move_history"].append(ai_move_san)
-                        ai_move = ai_move_san
-                        message += f". AI played {ai_move_san}"
-                        game_state = create_game_state(request.session_id, board, ai_move_san, session)
-                        game_state.move_history = session["move_history"]
-                        if board.is_game_over():
-                            if board.is_checkmate():
-                                winner = "Black" if board.turn == chess.WHITE else "White"
-                                message += f". Checkmate! {winner} wins!"
-                                session["status"] = "finished"
-                            elif board.is_stalemate():
-                                message += ". Stalemate! It's a draw."
-                                session["status"] = "finished"
-                    except Exception as e:
-                        message += f". AI move failed: {str(e)}"
-        return MoveResponse(
-            success=True,
-            game_state=game_state,
-            message=message,
-            ai_move=ai_move
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error making move: {str(e)}")
+            raise HTTPException(status_code=400, detail="Game is already over")
+        try:
+            move = parse_move_notation(request.move, board)
+            if move not in board.legal_moves:
+                raise HTTPException(status_code=400, detail=f"Illegal move: {request.move}")
+            san_move = board.san(move)
+            board.push(move)
+            session["move_history"].append(san_move)
+            game_state = create_game_state(request.session_id, board, san_move, session)
+            game_state.move_history = session["move_history"]
+            ai_move = None
+            ai_from_square = None
+            ai_to_square = None
+            message = f"Move {san_move} played successfully"
+            if board.is_game_over():
+                if board.is_checkmate():
+                    winner = "Black" if board.turn == chess.WHITE else "White"
+                    message += f". Checkmate! {winner} wins!"
+                    session["status"] = "finished"
+                elif board.is_stalemate():
+                    message += ". Stalemate! It's a draw."
+                    session["status"] = "finished"
+                elif board.is_insufficient_material():
+                    message += ". Draw due to insufficient material."
+                    session["status"] = "finished"
+            else:
+                current_player_color = "white" if board.turn == chess.WHITE else "black"
+                if current_player_color != session["player_color"]:
+                    ai_move_san, _ = get_ai_move(board, session["ai_difficulty"])  # MODIFIED: Ignore is_db here
+                    if ai_move_san:
+                        try:
+                            ai_move_obj = board.parse_san(ai_move_san)
+
+                            # Extract from/to squares before pushing (for flash animation)
+                            ai_from_square = chess.square_name(ai_move_obj.from_square)
+                            ai_to_square = chess.square_name(ai_move_obj.to_square)
+
+                            board.push(ai_move_obj)
+                            session["move_history"].append(ai_move_san)
+                            ai_move = ai_move_san
+                            message += f". AI played {ai_move_san}"
+                            game_state = create_game_state(request.session_id, board, ai_move_san, session)
+                            game_state.move_history = session["move_history"]
+                            if board.is_game_over():
+                                if board.is_checkmate():
+                                    winner = "Black" if board.turn == chess.WHITE else "White"
+                                    message += f". Checkmate! {winner} wins!"
+                                    session["status"] = "finished"
+                                elif board.is_stalemate():
+                                    message += ". Stalemate! It's a draw."
+                                    session["status"] = "finished"
+                        except Exception as e:
+                            message += f". AI move failed: {str(e)}"
+            return MoveResponse(
+                success=True,
+                game_state=game_state,
+                message=message,
+                ai_move=ai_move,
+                ai_from_square=ai_from_square,
+                ai_to_square=ai_to_square
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error making move: {str(e)}")
 
 # MODIFIED: /get_ai_move endpoint to include is_db_move
 @router.post("/get_ai_move")
 async def get_ai_move_endpoint(request: GetMoveRequest):
-    if request.session_id not in game_sessions:
-        raise HTTPException(status_code=404, detail="Game session not found")
-    
-    # Update session activity timestamp
-    update_session_activity(request.session_id)
-    session = game_sessions[request.session_id]
-    board = session["board"]
-    
-    if board.is_game_over():
-        raise HTTPException(status_code=400, detail="Game is already over")
-    
-    current_player_color = "white" if board.turn == chess.WHITE else "black"
-    player_color = session["player_color"]
-    
-    if current_player_color == player_color:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"It's the human player's turn ({current_player_color}), not the AI's turn. The AI plays {('black' if player_color == 'white' else 'white')}."
-        )
-    
-    ai_move_san, is_db_move = get_ai_move(board, session["ai_difficulty"])
-    if not ai_move_san:
-        raise HTTPException(status_code=400, detail="No legal moves available")
-    
-    # Actually make the AI move on the board
-    try:
-        ai_move_obj = board.parse_san(ai_move_san)
+    with open_game(request.session_id) as session:
+        board = session["board"]
 
-        # Get from/to squares before pushing the move (for flash animation)
-        from_square = chess.square_name(ai_move_obj.from_square)
-        to_square = chess.square_name(ai_move_obj.to_square)
+        if board.is_game_over():
+            raise HTTPException(status_code=400, detail="Game is already over")
 
-        board.push(ai_move_obj)
-        session["move_history"].append(ai_move_san)
+        current_player_color = "white" if board.turn == chess.WHITE else "black"
+        player_color = session["player_color"]
 
-        # Check if game is over after AI move
-        game_over = board.is_game_over()
-        checkmate = board.is_checkmate()
-        stalemate = board.is_stalemate()
-        draw = board.is_insufficient_material() or board.is_seventyfive_moves() or board.is_fivefold_repetition()
+        if current_player_color == player_color:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"It's the human player's turn ({current_player_color}), not the AI's turn. The AI plays {('black' if player_color == 'white' else 'white')}."
+            )
 
-        if game_over:
-            session["status"] = "finished"
+        ai_move_san, is_db_move = get_ai_move(board, session["ai_difficulty"])
+        if not ai_move_san:
+            raise HTTPException(status_code=400, detail="No legal moves available")
 
-        # Create updated game state
-        game_state = create_game_state(request.session_id, board, ai_move_san, session)
-        game_state.move_history = session["move_history"]
+        # Actually make the AI move on the board
+        try:
+            ai_move_obj = board.parse_san(ai_move_san)
 
-        return {
-            "ai_move": ai_move_san,
-            "from_square": from_square,  # NEW: For flash animation
-            "to_square": to_square,      # NEW: For flash animation
-            "is_db_move": is_db_move,
-            "session_id": request.session_id,
-            "ai_color": "black" if player_color == "white" else "white",
-            "current_turn": "white" if board.turn == chess.WHITE else "black",
-            "game_over": game_over,
-            "checkmate": checkmate,
-            "stalemate": stalemate,
-            "draw": draw,
-            "game_state": game_state
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error making AI move: {str(e)}")
+            # Get from/to squares before pushing the move (for flash animation)
+            from_square = chess.square_name(ai_move_obj.from_square)
+            to_square = chess.square_name(ai_move_obj.to_square)
+
+            board.push(ai_move_obj)
+            session["move_history"].append(ai_move_san)
+
+            # Check if game is over after AI move
+            game_over = board.is_game_over()
+            checkmate = board.is_checkmate()
+            stalemate = board.is_stalemate()
+            draw = board.is_insufficient_material() or board.is_seventyfive_moves() or board.is_fivefold_repetition()
+
+            if game_over:
+                session["status"] = "finished"
+
+            # Create updated game state
+            game_state = create_game_state(request.session_id, board, ai_move_san, session)
+            game_state.move_history = session["move_history"]
+
+            return {
+                "ai_move": ai_move_san,
+                "from_square": from_square,  # NEW: For flash animation
+                "to_square": to_square,      # NEW: For flash animation
+                "is_db_move": is_db_move,
+                "session_id": request.session_id,
+                "ai_color": "black" if player_color == "white" else "white",
+                "current_turn": "white" if board.turn == chess.WHITE else "black",
+                "game_over": game_over,
+                "checkmate": checkmate,
+                "stalemate": stalemate,
+                "draw": draw,
+                "game_state": game_state
+            }
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error making AI move: {str(e)}")
 
 @router.post("/get_hint")
 async def get_hint(request: HintRequest):
-    if request.session_id not in game_sessions:
-        raise HTTPException(status_code=404, detail="Game session not found")
-    session = game_sessions[request.session_id]
+    # Read-only: a hint suggests a move, it does not play one.
+    session = read_game(request.session_id)
     board = session["board"]
     if board.is_game_over():
         raise HTTPException(status_code=400, detail="Game is already over")
@@ -1146,12 +1214,8 @@ async def get_hint(request: HintRequest):
 
 @router.get("/game_state/{session_id}", response_model=GameState)
 async def get_game_state(session_id: str):
-    if session_id not in game_sessions:
-        raise HTTPException(status_code=404, detail="Game session not found")
-    
-    # Update session activity timestamp
+    session = read_game(session_id)
     update_session_activity(session_id)
-    session = game_sessions[session_id]
     board = session["board"]
     game_state = create_game_state(session_id, board, session_data=session)
     game_state.move_history = session["move_history"]
@@ -1159,12 +1223,10 @@ async def get_game_state(session_id: str):
 
 @router.get("/legal_moves/{session_id}")
 async def get_legal_moves(session_id: str):
-    if session_id not in game_sessions:
-        raise HTTPException(status_code=404, detail="Game session not found")
-    
-    # Update session activity timestamp
+    # Read-only despite the push/pop below: every probe is undone, so the
+    # board ends where it started and nothing needs saving.
+    session = read_game(session_id)
     update_session_activity(session_id)
-    session = game_sessions[session_id]
     board = session["board"]
     
     # Build enhanced legal moves with check/checkmate info and protection details
@@ -1223,21 +1285,22 @@ async def get_legal_moves(session_id: str):
 
 @router.delete("/game/{session_id}")
 async def delete_game(session_id: str):
-    if session_id not in game_sessions:
+    if not game_sessions.delete(session_id):
         raise HTTPException(status_code=404, detail="Game session not found")
-    del game_sessions[session_id]
     return {"message": f"Game session {session_id} deleted successfully"}
 
 @router.get("/active_games")
 async def get_active_games():
+    # Now genuinely every active game, not just the ones this worker happens
+    # to be holding.
     active_sessions = []
-    for session_id, session in game_sessions.items():
+    for session_id, data in game_sessions.items():
         active_sessions.append({
             "session_id": session_id,
-            "status": session["status"],
-            "player_color": session["player_color"],
-            "move_count": len(session["move_history"]),
-            "created_at": session["created_at"].isoformat()
+            "status": data["status"],
+            "player_color": data["player_color"],
+            "move_count": len(data["move_history"]),
+            "created_at": data["created_at"]
         })
     return {"active_games": active_sessions, "count": len(active_sessions)}
 

@@ -10,28 +10,41 @@ bind = 'unix:/var/www/fleminganalytic/gunicorn.sock'
 
 # Worker Options
 #
-# One worker, because three module-level dicts hold state that a second
-# process would not share. Raising this without dealing with them first does
-# not fail loudly - it fails intermittently, which is worse, since a request
-# either lands on the process holding the state or it does not.
+# This was `workers = 1` for a long time, because three module-level dicts
+# held state a second process would not share. Raising it before fixing them
+# would not have failed loudly - it would have failed intermittently, which is
+# worse, since a request either lands on the process holding the state or it
+# does not. All three are now resolved:
 #
-#   chessapi.py:103           game_sessions   a game in progress. Nothing is
-#                                             written to disk, so a second
-#                                             worker loses games mid-move.
-#   apps/stjohn/router.py:33  sessions        login tokens. A second worker
-#                                             logs people out at random.
-#   apps/analyst/router.py    sessions        RESOLVED - now a cache. It
-#                                             rebuilds itself from disk on a
-#                                             miss and replays any derived
-#                                             columns, so it is already safe
-#                                             for more than one worker.
+#   apps/analyst/router.py      the dataset session is a cache. It rebuilds
+#                               itself from disk on a miss and replays any
+#                               derived columns.
+#   chessapi/chessapi.py        games are in SQLite, stored as their move list
+#                               and replayed on load, so repetition and the
+#                               fifty-move rule survive the round trip.
+#   apps/stjohn/router.py       login tokens are in SQLite. A restart no
+#                               longer signs everybody out.
 #
-# The remaining two need a shared store. db/stjohn.db already exists and
-# SQLite is sufficient for both - no new infrastructure. Until then, every
-# request to every application on this domain queues behind this process.
-workers = 1
+# Both of the latter use apps/session_store.py, which versions each row and
+# refuses a stale write rather than silently losing one of two simultaneous
+# updates.
+#
+# Four, not the conventional (2 x cores) + 1. This is a 4-core box shared with
+# several other sites, and at ~60 requests/hour the point of more workers here
+# is that one slow pivot or chess search no longer blocks every other
+# application on the domain - not raw throughput. Oversubscribing a shared
+# machine to chase throughput nobody is asking for would just move the
+# contention somewhere less visible.
+workers = 4
 
 worker_class = 'uvicorn.workers.UvicornWorker'
+
+# Import the application once in the master and fork, rather than importing it
+# in each worker. It loads 1,091 PGN games and the pandas/analyst stack at
+# import; without this, four workers pay that cost four times in memory and in
+# startup. Safe only because no module now holds mutable per-request state -
+# which is exactly what the work above was for.
+preload_app = True
 
 # Timeout (increased for file uploads)
 timeout = 300

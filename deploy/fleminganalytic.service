@@ -1,0 +1,42 @@
+[Unit]
+Description=Uvicorn server for the FlemingAnalytic application
+After=network.target
+
+# Restart forever is the right policy for a crash mid-request; it is the wrong
+# policy for a process that cannot boot at all, because the two are
+# indistinguishable to systemd and the second one loops until someone notices.
+#
+# k12books.service did exactly that: an import-time HTTP call started
+# returning 403, the worker never booted, and it restarted 63,066 times over
+# seven days - burning a full core of four on a box shared with every site
+# here. Nobody noticed, because a service that is always "activating" looks
+# busy rather than broken.
+#
+# Five failures in five minutes is not a transient fault. Stop and stay
+# stopped, so the failure is visible as a down site instead of hiding as load.
+# (These two are [Unit] keys, not [Service] keys - systemd silently warns and
+# ignores them if they are put beside Restart= below.)
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/fleminganalytic
+Environment="PATH=/var/www/fleminganalytic/venv/bin"
+Environment="VIRTUAL_ENV=/var/www/fleminganalytic/venv"
+Environment="HOME=/var/www/fleminganalytic"
+Environment="MPLCONFIGDIR=/var/www/fleminganalytic/matplotlib_cache"
+
+# Read the settings from gunicorn_conf.py instead of repeating them here.
+# They used to be spelled out on this line, which meant gunicorn_conf.py was
+# decorative: it said `workers = 1` and carried a long comment explaining why,
+# and nothing read either. Editing the file appeared to do nothing, and the
+# comment in it drifted until it cited a source file that no longer ran.
+# One place to change it now.
+ExecStart=/var/www/fleminganalytic/venv/bin/gunicorn -c /var/www/fleminganalytic/gunicorn_conf.py main:app
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
