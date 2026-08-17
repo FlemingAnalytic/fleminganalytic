@@ -1,81 +1,96 @@
-# Privacy Policy for Astrology Chart Generator
+# Privacy Policy
 
-**Last updated: July 8, 2025**
+**Last updated: August 17, 2026**
 
-## Introduction
+## Who this covers
 
-Fleming Analytic Resources. Inc ("we", "our", or "us") operates the Astrology Chart Generator mobile application (the "Service"). This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service.
+Fleming Analytic Resources, Inc. ("we", "our", or "us") operates the website at fleminganalytic.com and a number of applications published under that name, including the Astrology Chart Generator mobile application. This policy applies to all of them. Where a particular application handles data differently, that difference is stated below.
 
-## Information We Collect
+## The short version
 
-### Personal Information
+We do not use cookies. We do not use analytics, advertising, or tracking services of any kind. We do not sell, rent, or trade personal information. Nothing you enter is shared with a third party for marketing, ever.
 
-When you use our astrology chart generation service, we collect the following information:
+The only information we hold is what you deliberately send us, plus the ordinary server records described below.
 
-- **Birth Date**: Used to calculate your astrological chart
-- **Birth Time**: Used for accurate chart calculations and house placements
-- **Birth Location**: City, state/province, and country used for geographic calculations
-- **Device Information**: Basic device information for service optimization
+## What we collect
 
-### How We Use Your Information
+### When you browse the site
 
-We use the collected information for the following purposes:
+Our web server keeps standard access logs containing your IP address, the page requested, the time of the request, and your browser's user-agent string. These are the routine records any web server keeps in order to operate securely. They are rotated and deleted automatically after fourteen days.
 
-- **Chart Generation**: To create personalized astrological charts and interpretations
-- **Service Improvement**: To analyze usage patterns and improve our service
-- **Technical Support**: To provide customer support and resolve technical issues
+No cookies are set. No third-party scripts run. Your browser is not asked to contact any company other than ours.
 
-## Data Storage and Security
+### When you contact us
 
-- Your personal data is processed securely using industry-standard encryption
-- Birth data is only stored temporarily during chart generation
-- We do not store your personal information on our servers after chart generation
-- All data transmission is encrypted using HTTPS
+If you use the contact form, we store the email address you give us, the message you write, the page you were on, the time, and the IP address the message came from. We keep the IP address so we can identify and block automated abuse of the form.
 
-## Data Sharing
+We keep these messages so we can respond and refer back to the conversation. You can ask us to delete yours at any time, and we will.
 
-We do not sell, trade, or otherwise transfer your personal information to third parties, except:
+### When you use the Astrology Chart Generator
 
-- **Service Providers**: We do not share data with trusted third-party services that help us operate our app
-- **Legal Requirements**: We may disclose information if required by law or to protect our rights
+To draw a chart, the application needs a birth date, a birth time, and a birth place. These are used to perform the calculation and are not stored on our servers after the chart is generated.
 
-## Your Rights
+To turn a place name into coordinates and a time zone, the application looks the place up in a public geographic database. What is sent is the place name only — for example "Chicago, United States". Your birth date, your birth time, your name, and your address are never sent anywhere. A city name on its own does not identify anybody, and it is not linked to any account or identifier when it is looked up.
 
-You have the right to:
+### When you upload data to the analyst tools
 
-- **Access**: Request a copy of the personal data we hold about you
-- **Correction**: Request correction of any inaccurate personal data
-- **Deletion**: Request deletion of your personal data
-- **Portability**: Request transfer of your data to another service
+Some of our tools let you load a file of your own to work with. That file is stored on our server so the tool can query it, and it stays there until you ask us to remove it. Do not upload data you are not permitted to share with us. We do not inspect, analyse, or use uploaded files for any purpose other than serving the tool back to you.
 
-## Data Retention
+## What we do not do
 
-- Birth data used for chart generation is not permanently stored
-- Temporary data is automatically deleted after chart generation
-- Device information may be retained for service improvement purposes
+- We do not set cookies.
+- We do not use Google Analytics, advertising pixels, session recorders, or any other tracking service.
+- We do not build profiles of visitors.
+- We do not sell, rent, or trade personal information to anyone.
+- We do not send marketing email to people who have not asked for it.
 
-## Children's Privacy
+## Third parties we rely on
 
-Our Service is not directed to children under 13. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.
+We keep these to a minimum, and none of them receive personal information for their own purposes:
 
-## Changes to This Privacy Policy
+- **Hosting.** Our servers are rented from a hosting provider, which necessarily has physical custody of the machines the site runs on.
+- **Email delivery.** Messages you send us are delivered to our mailbox through our email provider, in the same way any email reaches any recipient.
+- **Geographic lookup.** Place names are resolved against public geographic databases, as described above. Only the place name is sent.
 
-We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.
+We may disclose information if we are required to by law, or where it is necessary to establish or defend a legal claim.
 
-## Contact Us
+## Data retention
 
-If you have any questions about this Privacy Policy, please contact us:
+- Server access logs: deleted automatically after fourteen days.
+- Contact form messages: kept until you ask us to delete them.
+- Birth data submitted for a chart: not retained after the chart is generated.
+- Files you upload to our tools: kept until you ask us to remove them.
+
+## Your rights
+
+Wherever you live, you may ask us to:
+
+- **Access** — tell you what personal information we hold about you.
+- **Correct** — fix anything that is wrong.
+- **Delete** — erase it.
+- **Export** — send you a copy in a portable format.
+
+Write to the address at the bottom of this page and we will action it. We will not charge you, and we will not ask you to justify the request.
+
+## Children
+
+Our services are not directed to children under 13, and we do not knowingly collect personal information from them. If you are a parent or guardian and believe your child has sent us personal information, contact us and we will delete it.
+
+## Security
+
+Traffic to and from our sites is encrypted with HTTPS. Access to our servers is restricted to us. No system is perfectly secure, and we do not claim otherwise — which is a further reason we hold as little as we do.
+
+## Changes to this policy
+
+If we change this policy we will post the revised version on this page and update the date at the top. Material changes to how we handle information already collected will not be applied retroactively without telling you.
+
+## Contact us
 
 - **Email**: fleminganalytic@gmail.com
-- **Website**: https://fleminganalytic.com/astro
-- **Address**: 11800 S. 75th St Palos Heights IL 60453
-
-## Consent
-
-By using our Service, you consent to our Privacy Policy and agree to our collection and use of information in accordance with this policy.
+- **Website**: https://fleminganalytic.com
+- **Address**: 11800 S. 75th St, Palos Heights, IL 60453, United States
 
 ---
 
 **Fleming Analytic Resources, Inc.**
-Astrology Chart Generator
 https://fleminganalytic.com
