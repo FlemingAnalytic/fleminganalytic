@@ -28,11 +28,15 @@ We keep these messages so we can respond and refer back to the conversation. You
 
 ### When you use the Astrology Chart Generator
 
-To draw a chart, the application needs a birth date, a birth time, and a birth place. These are used to perform the calculation and are not written to any database.
+The application asks for four things: a name, a date, a time, and a place. That is the whole of it.
 
-The chart image, word cloud, and PDF report that come back are held on our server only long enough for your device to collect them. They are deleted from the server the moment they are sent to you — fetched once, then gone. Anything you generate but never collect is deleted automatically within thirty minutes. We keep no copy, and there is no archive of past charts to look anything up in.
+**It does not ask who you are, and it has no way of knowing.** A chart is drawn for whoever you name — most people try John Lennon or a friend or a character out of a book before they try themselves. We do not ask whether the subject is you, we do not require an account, and nothing you enter is connected to you, to your device, or to anything else you have ever entered. There is no login, no profile, and no history.
 
-To turn a place name into coordinates and a time zone, the application looks the place up in a public geographic database. What is sent is the place name only — for example "Chicago, United States". Your birth date, your birth time, your name, and your address are never sent anywhere. A city name on its own does not identify anybody, and it is not linked to any account or identifier when it is looked up.
+If you do choose to enter your own details, they are treated exactly the same way as anybody else's: used to perform the calculation, and written to no database at any point.
+
+The chart image, word cloud, and PDF report that come back are held on our server only long enough for your device to collect them. They are deleted the moment they are sent to you — fetched once, then gone. Anything generated but never collected is deleted automatically within thirty minutes. We keep no copy, and there is no archive of past charts to look anything up in.
+
+To turn a place name into coordinates and a time zone, the application looks it up in a public geographic database. What is sent is the place name only — for example "Chicago, United States". The name, the date, and the time are never sent anywhere. A city name on its own identifies nobody, and it is not linked to any account or identifier when it is looked up.
 
 ### When you upload data to the analyst tools
 
@@ -60,7 +64,7 @@ We may disclose information if we are required to by law, or where it is necessa
 
 - Server access logs: deleted automatically after fourteen days.
 - Contact form messages: kept until you ask us to delete them.
-- Birth data submitted for a chart: not written to a database at any point.
+- Chart details (a name, a date, a time, a place, for whoever the chart is for): not written to a database at any point.
 - Charts, word clouds, and PDF reports: deleted from our server as they are delivered to you, and within thirty minutes if never collected.
 - Files you upload to our tools: kept until you ask us to remove them.
 
