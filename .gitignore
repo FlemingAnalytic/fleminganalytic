@@ -55,3 +55,7 @@ error_log*
 .claude/
 db/profile_cache/
 db/sessions.db*
+
+# The app-store privacy policy is generated into the deploy directory but
+# must be version-controlled: CI compares it against the policy source.
+!client-prod/privacy.html

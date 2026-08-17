@@ -25,8 +25,32 @@ jobs:
       # Not a test suite - there barely is one. This catches the syntax
       # error that would take the whole site down on restart, which is the
       # single cheapest thing to be certain of.
+      #
+      # chessapi.py is the package now. There was also a top-level module of
+      # the same name that Python never loaded, because a package wins; it
+      # was compiled here for months while the code that actually runs was
+      # not.
       - name: Byte-compile every module
-        run: python -m compileall -q apps main.py chessapi.py
+        run: python -m compileall -q apps main.py chessapi
+
+  privacy:
+    name: The app-store privacy policy is intact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # /privacy is the URL given to the mobile app stores. It was a dead
+      # single-page-app route for months - a navbar over nothing, answering
+      # 200 like every other path - and separately, the generator that
+      # replaced it silently dropped a clause of the policy, because the
+      # clause quotes the phrase the generator was searching for. Both are
+      # invisible in a page that still looks well-formed, so both are checked.
+      - name: The published page matches the policy source
+        run: python scripts/build_privacy.py --check
+      - name: Every clause of the policy reaches the page
+        run: python scripts/check_privacy_complete.py
 
   secrets:
     name: No credentials in the tree
