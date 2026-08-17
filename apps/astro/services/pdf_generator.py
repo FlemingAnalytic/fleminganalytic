@@ -5,6 +5,9 @@ from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
 import os
+from urllib.parse import urlparse
+
+from .. import transient
 import io
 from datetime import datetime
 import cairosvg
@@ -76,8 +79,11 @@ class PDFGenerator:
             timestamp = str(int(datetime.now().timestamp() * 1000000))
             filename = f"astro_report_{timestamp}.pdf"
 
-        filepath = os.path.join("static", "pdf", filename)
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        # The report is the most complete artefact of the lot - the chart,
+        # the wordcloud and the full interpretation, under the subject's name
+        # - so it gets the same one-shot handling rather than sitting in
+        # static/pdf, where thirteen of them had accumulated since July 2025.
+        filepath = str(transient.ensure_dir() / filename)
 
         doc = SimpleDocTemplate(filepath, pagesize=letter,
             rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
@@ -215,10 +221,15 @@ class PDFGenerator:
 
         chart_url = chart_data.get('chart_url', '')
         if chart_url:
-            svg_filename = chart_url.replace('/static/images/', '')
-            svg_path = os.path.join('static', 'images', svg_filename)
-            if os.path.exists(svg_path):
-                png_data = self._convert_svg_to_png(svg_path)
+            # Resolve by basename through the transient store rather than by
+            # string-surgery on the URL. The previous version did
+            # chart_url.replace('/static/images/', '') and rebuilt a path from
+            # it, so changing where charts live silently produced "Chart image
+            # not available" instead of an error - a PDF that is quietly
+            # missing its chart is worse than one that fails.
+            svg_path = transient.path_for(os.path.basename(urlparse(chart_url).path))
+            if svg_path and svg_path.exists():
+                png_data = self._convert_svg_to_png(str(svg_path))
                 if png_data:
                     img = self._embed_image(png_data, 6.5*inch, 6.5*inch)
                     if img:
@@ -238,10 +249,10 @@ class PDFGenerator:
 
         story.append(Paragraph("Chart Essence", self.section_style))
 
-        png_path = file_url.replace('/static/', 'static/')
-        if os.path.exists(png_path):
+        png_path = transient.path_for(os.path.basename(urlparse(file_url).path))
+        if png_path and png_path.exists():
             try:
-                img = Image(png_path, width=6*inch, height=3*inch)
+                img = Image(str(png_path), width=6*inch, height=3*inch)
                 img.hAlign = 'CENTER'
                 story.append(Spacer(1, 0.2*inch))
                 story.append(img)

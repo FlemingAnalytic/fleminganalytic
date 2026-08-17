@@ -28,7 +28,9 @@ We keep these messages so we can respond and refer back to the conversation. You
 
 ### When you use the Astrology Chart Generator
 
-To draw a chart, the application needs a birth date, a birth time, and a birth place. These are used to perform the calculation and are not stored on our servers after the chart is generated.
+To draw a chart, the application needs a birth date, a birth time, and a birth place. These are used to perform the calculation and are not written to any database.
+
+The chart image, word cloud, and PDF report that come back are held on our server only long enough for your device to collect them. They are deleted from the server the moment they are sent to you — fetched once, then gone. Anything you generate but never collect is deleted automatically within thirty minutes. We keep no copy, and there is no archive of past charts to look anything up in.
 
 To turn a place name into coordinates and a time zone, the application looks the place up in a public geographic database. What is sent is the place name only — for example "Chicago, United States". Your birth date, your birth time, your name, and your address are never sent anywhere. A city name on its own does not identify anybody, and it is not linked to any account or identifier when it is looked up.
 
@@ -58,7 +60,8 @@ We may disclose information if we are required to by law, or where it is necessa
 
 - Server access logs: deleted automatically after fourteen days.
 - Contact form messages: kept until you ask us to delete them.
-- Birth data submitted for a chart: not retained after the chart is generated.
+- Birth data submitted for a chart: not written to a database at any point.
+- Charts, word clouds, and PDF reports: deleted from our server as they are delivered to you, and within thirty minutes if never collected.
 - Files you upload to our tools: kept until you ask us to remove them.
 
 ## Your rights

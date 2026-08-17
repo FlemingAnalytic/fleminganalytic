@@ -4,15 +4,19 @@ from typing import Dict, Any
 import os
 import time
 
+from .. import transient
+
 class ChartGenerator:
     """Service for generating astrological charts using Kerykeion"""
     
     def __init__(self):
-        # Ensure static directories exist
-        self.static_dir = Path("static")
-        self.static_dir.mkdir(exist_ok=True)
-        self.images_dir = Path("static") / "images"
-        self.images_dir.mkdir(exist_ok=True)
+        # Charts go to a one-shot directory OUTSIDE the nginx static alias,
+        # not to static/images. While they lived under static/, nginx served
+        # them straight off disk, the application never saw the fetch, and
+        # nothing ever deleted them - 1,040 charts and 244 MB accumulated,
+        # each carrying a subject's name and birth data, while the privacy
+        # policy said none of it was retained. See apps/astro/transient.py.
+        self.images_dir = transient.ensure_dir()
     
     def generate_chart(
         self, 

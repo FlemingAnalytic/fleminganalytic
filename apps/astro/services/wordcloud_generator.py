@@ -1,5 +1,6 @@
 import uuid
 from pathlib import Path
+from .. import transient
 from typing import Dict, Any, List
 from wordcloud import WordCloud
 
@@ -62,9 +63,8 @@ class WordCloudGenerator:
     }
 
     def __init__(self):
-        # Save to the main static folder
-        self.static_images_path = Path("/var/www/fleminganalytic/static/images")
-        self.static_images_path.mkdir(parents=True, exist_ok=True)
+        # One-shot directory, not static/ - same reasoning as the chart SVG.
+        self.static_images_path = transient.ensure_dir()
 
     def _normalize_sign(self, sign: str) -> str:
         """Convert abbreviated or varied sign names to standard form"""

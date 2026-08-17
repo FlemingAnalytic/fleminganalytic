@@ -17,6 +17,7 @@ import io
 import os
 import re
 from pathlib import Path
+from .. import transient
 from typing import Dict, Any, Optional, Tuple
 import math
 
@@ -303,7 +304,9 @@ class MugImageGenerator:
     }
 
     def __init__(self):
-        self.images_dir = Path("static") / "images"
+        # One-shot, like the chart and wordcloud: these are rendered from
+        # somebody's birth chart and carry the same data.
+        self.images_dir = transient.ensure_dir()
         self.images_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_aspect_meaning(self, planet1: str, planet2: str, aspect_type: str) -> str:

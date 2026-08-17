@@ -13,6 +13,7 @@ from .services.interpreter import AstrologyInterpreter
 from .services.pdf_generator import PDFGenerator
 from .services.wordcloud_generator import WordCloudGenerator
 from .services.mug_image_generator import MugImageGenerator
+from . import transient
 
 # Create router with prefix
 astro_router = APIRouter(prefix="/astro", tags=["astrology"])
@@ -27,6 +28,11 @@ mug_image_generator = MugImageGenerator()
 @astro_router.post("/generate-chart", response_model=ChartResponse)
 async def generate_chart(request: ChartRequest, req: Request):
     try:
+        # Anything generated earlier and never collected goes now. Without
+        # this, abandoned charts would rebuild the 244 MB that started all of
+        # this - delete-on-fetch only cleans up what someone comes back for.
+        transient.sweep()
+
         chart_id = str(uuid.uuid4())
         
         chart_data = chart_generator.generate_chart(
@@ -64,12 +70,13 @@ async def generate_chart(request: ChartRequest, req: Request):
         ) else 'http'
         
         base_url = f"{scheme}://{req.headers.get('host', req.url.netloc)}"
-        chart_url = f"/static/images/{chart_data['svg_filename']}"
+        chart_url = f"{base_url}/astro/artifact/{chart_data['svg_filename']}"
         
         response = ChartResponse(
             chart_id=chart_id,
             chart_url=chart_url,
-            full_url=f"{base_url}{chart_url}",
+            full_url=chart_url,  # chart_url is already absolute
+
             birth_data={
                 "name": request.name,
                 "date": f"{request.year}-{request.month:02d}-{request.day:02d}",
@@ -84,8 +91,8 @@ async def generate_chart(request: ChartRequest, req: Request):
             element_analysis=interpretation["element_analysis"],
             observations=interpretation["observations"],
             wordcloud={
-                "file_url": f"/static/images/{wordcloud_filename}",
-                "full_url": f"{base_url}/static/images/{wordcloud_filename}"
+                "file_url": f"{base_url}/astro/artifact/{wordcloud_filename}",
+                "full_url": f"{base_url}/astro/artifact/{wordcloud_filename}"
             }
         )
         
@@ -100,6 +107,11 @@ async def generate_chart(request: ChartRequest, req: Request):
 @astro_router.post("/generate-pdf")
 async def generate_pdf(request: ChartRequest, req: Request):
     try:
+        # Anything generated earlier and never collected goes now. Without
+        # this, abandoned charts would rebuild the 244 MB that started all of
+        # this - delete-on-fetch only cleans up what someone comes back for.
+        transient.sweep()
+
         chart_id = str(uuid.uuid4())
         
         chart_data = chart_generator.generate_chart(
@@ -138,12 +150,13 @@ async def generate_pdf(request: ChartRequest, req: Request):
         ) else 'http'
         
         base_url = f"{scheme}://{req.headers.get('host', req.url.netloc)}"
-        chart_url = f"/static/images/{chart_data['svg_filename']}"
+        chart_url = f"{base_url}/astro/artifact/{chart_data['svg_filename']}"
         
         complete_chart_data_with_wordcloud = {
             "chart_id": chart_id,
             "chart_url": chart_url,
-            "full_url": f"{base_url}{chart_url}",
+            "full_url": chart_url,  # already absolute
+
             "birth_data": {
                 "name": request.name,
                 "date": f"{request.year}-{request.month:02d}-{request.day:02d}",
@@ -158,22 +171,23 @@ async def generate_pdf(request: ChartRequest, req: Request):
             "element_analysis": interpretation["element_analysis"],
             "observations": interpretation["observations"],
             "wordcloud": {
-                "file_url": f"/static/images/{wordcloud_filename}"
+                "file_url": f"{base_url}/astro/artifact/{wordcloud_filename}"
             }
         }
         
         pdf_filename = pdf_generator.generate_pdf_report(complete_chart_data_with_wordcloud)
         
-        pdf_url = f"/static/pdf/{pdf_filename}"
+        pdf_url = f"{base_url}/astro/artifact/{pdf_filename}"
         
         return {
             "success": True,
             "pdf_filename": pdf_filename,
             "pdf_url": pdf_url,
-            "full_pdf_url": f"{base_url}{pdf_url}",
+            "full_pdf_url": pdf_url,  # already absolute
+
             "chart_id": chart_id,
             "wordcloud": {
-                "file_url": f"/static/images/{wordcloud_filename}"
+                "file_url": f"{base_url}/astro/artifact/{wordcloud_filename}"
             },
             "message": "PDF report generated successfully"
         }
@@ -195,6 +209,42 @@ async def get_astro_interface():
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Astrology interface not found"
         )
+
+
+@astro_router.get("/artifact/{filename}")
+async def get_artifact(filename: str):
+    """Hand over a generated chart or wordcloud, once, then delete it.
+
+    This is the whole point of the redesign: the file is removed from the
+    server as it is delivered, so a chart exists only for as long as it takes
+    the person who asked for it to receive it. Anything nobody collects is
+    swept on the next generation.
+
+    A second request for the same artefact returns 404, and that is correct
+    rather than a bug - it means the first delivery worked and the copy is
+    gone. The response is marked no-store so that neither the browser nor any
+    proxy keeps one either; the previous /static/ route sent these with
+    "public, max-age=2592000", which invited a shared cache to hold somebody's
+    birth chart for a month.
+    """
+    data = transient.take(filename)
+    if data is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This chart has already been delivered, or has expired. Generate it again.",
+        )
+    media = ("image/svg+xml" if filename.endswith(".svg")
+             else "application/pdf" if filename.endswith(".pdf")
+             else "image/png")
+    return Response(
+        content=data,
+        media_type=media,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, private",
+            "Pragma": "no-cache",
+        },
+    )
+
 
 @astro_router.get("/privacy")
 async def get_privacy_policy():
@@ -248,6 +298,11 @@ async def generate_etsy_mug_set(request: MugImageRequest, req: Request):
     - 15oz mug: 2700x1140 pixels (9" x 3.8")
     """
     try:
+        # Anything generated earlier and never collected goes now. Without
+        # this, abandoned charts would rebuild the 244 MB that started all of
+        # this - delete-on-fetch only cleans up what someone comes back for.
+        transient.sweep()
+
         chart_id = str(uuid.uuid4())
 
         # Generate the chart
@@ -304,11 +359,12 @@ async def generate_etsy_mug_set(request: MugImageRequest, req: Request):
         def build_image_info(filename, description):
             if not filename:
                 return None
-            url = f"/static/images/{filename}"
+            url = f"{base_url}/astro/artifact/{filename}"
             return {
                 "filename": filename,
                 "url": url,
-                "full_url": f"{base_url}{url}",
+                "full_url": url,  # already absolute
+
                 "description": description
             }
 
