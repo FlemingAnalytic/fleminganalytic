@@ -73,6 +73,36 @@ async function renders(url) {
 }
 
 let fails = 0;
+
+// The privacy policy is the URL submitted to the mobile app stores, so it has
+// a stricter bar than "renders": it must be real content, without JavaScript,
+// and it must name the company and offer a way to make contact. It was a dead
+// single-page-app route for months and nothing noticed, because the shell
+// answers 200 like every other path.
+console.log('\nPRIVACY POLICY — the app-store URL, checked without JavaScript\n');
+{
+    const ctx = await browser.newContext({ javaScriptEnabled: false });
+    const bare = await ctx.newPage();
+    try {
+        const resp = await bare.goto(`${SITE}/privacy`, { waitUntil: 'load', timeout: 30000 });
+        const m = await bare.evaluate(() => ({
+            text: document.body.innerText.trim().length,
+            mailto: !!document.querySelector('a[href^="mailto:"]'),
+            org: /Fleming Analytic Resources/i.test(document.body.innerText),
+            updated: /last updated/i.test(document.body.innerText),
+        }));
+        const ok = resp?.status() === 200 && m.text > 1500 && m.mailto && m.org && m.updated;
+        if (!ok) fails++;
+        console.log(`  ${ok ? 'OK  ' : 'FAIL'} /privacy  ${m.text} chars (no JS) · ` +
+                    `contact ${m.mailto ? 'yes' : 'NO'} · company ${m.org ? 'yes' : 'NO'} · ` +
+                    `dated ${m.updated ? 'yes' : 'NO'}`);
+    } catch (e) {
+        fails++;
+        console.log(`  FAIL /privacy  ${String(e).slice(0, 60)}`);
+    }
+    await ctx.close();
+}
+
 console.log('\nAPPLICATIONS — must render real content, and their API must answer\n');
 for (const app of APPS) {
     const r = await renders(SITE + app.url);
