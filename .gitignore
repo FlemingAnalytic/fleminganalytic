@@ -53,3 +53,5 @@ error_log*
 .vscode/
 .idea/
 .claude/
+db/profile_cache/
+db/sessions.db*

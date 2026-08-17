@@ -29,6 +29,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 from sklearn.feature_selection import mutual_info_regression
 import pickle
+
+from .profile_cache import profile_df, file_source_key
 from scipy import stats
 
 from fastapi import APIRouter, UploadFile, File, Request, HTTPException, Form
@@ -257,15 +259,21 @@ def clean_for_json(obj):
         return {k: clean_for_json(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [clean_for_json(item) for item in obj]
-    elif isinstance(obj, float):
-        if np.isnan(obj) or np.isinf(obj):
-            return None
-        return obj
-    elif isinstance(obj, (np.floating, np.integer)):
+    elif isinstance(obj, (float, np.floating)):
+        # float() is not redundant: np.float64 subclasses float, so it matched
+        # this branch and was returned unconverted, which made the np.floating
+        # branch below unreachable for it. Harmless while everything was
+        # recomputed per request - json.dumps accepts a float subclass - but
+        # once profiles are cached, a miss returned numpy scalars and a hit
+        # returned plain floats for the same data.
         val = float(obj)
         if np.isnan(val) or np.isinf(val):
             return None
         return val
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
     return obj
 
 
@@ -1756,16 +1764,30 @@ def make_classification(df: pd.DataFrame, column: str, method: str, params: dict
     raise HTTPException(status_code=400, detail=f"Unknown method: {method}")
 
 
-def build_session(df: pd.DataFrame) -> dict:
-    """The five things every loader puts in a session, in one place."""
-    profiler = DataProfiler(df)
+def profile_of(df: pd.DataFrame, source_key: Optional[str] = None) -> dict:
+    """The dataset profile, computed once and shared by every worker.
+
+    Profiling is a pure function of the frame - about 0.68s on 100,000 rows -
+    so it is cached on disk rather than recomputed per load and per worker.
+    See apps/analyst/profile_cache.py for how it is keyed and invalidated.
+    """
+    return profile_df(df, DataProfiler, source_key=source_key, clean=clean_for_json)
+
+
+def build_session_with_profile(df: pd.DataFrame, profile: dict) -> dict:
+    """A session around a profile the caller has already got."""
     return {
         "df": df,
-        "profile": profiler.run_full_profile(),
+        "profile": profile,
         "classifications": {},
         "pivot_engine": PivotEngine(df),
         "model_engine": None,
     }
+
+
+def build_session(df: pd.DataFrame, source_key: Optional[str] = None) -> dict:
+    """The five things every loader puts in a session, in one place."""
+    return build_session_with_profile(df, profile_of(df, source_key))
 
 
 def get_session(name: str) -> dict:
@@ -1793,11 +1815,15 @@ def get_session(name: str) -> dict:
         return sessions[name]
 
     df = None
+    source_key = None
     if name.startswith("saved_"):
         base = name[len("saved_"):]
         for ext in (".csv", ".txt", ".xlsx", ".xls"):
             path = os.path.join(SAVED_DATA_DIR, base + ext)
             if os.path.exists(path):
+                # The file's identity keys the profile cache for about 0.1ms,
+                # where content-hashing the frame would cost ~80ms.
+                source_key = file_source_key(path)
                 if ext in (".xlsx", ".xls"):
                     df = pd.read_excel(path)
                 else:
@@ -1817,7 +1843,7 @@ def get_session(name: str) -> dict:
         )
 
     logger.info(f"analyst: rebuilt session {name} from disk")
-    session = build_session(df)
+    session = build_session(df, source_key=source_key)
     for spec in _classification_specs().get(name, []):
         try:
             result = make_classification(session["df"], spec["column"], spec["method"],
@@ -1932,8 +1958,7 @@ async def upload_file(file: UploadFile = File(...)):
         save_library(library)
 
         # Profile the data
-        profiler = DataProfiler(df)
-        profile = profiler.run_full_profile()
+        profile = profile_of(df)
 
         # Store in session
         sessions[safe_filename] = {
@@ -1961,8 +1986,7 @@ async def load_public(name: str = Form(...)):
     try:
         df = load_public_dataset(name)
 
-        profiler = DataProfiler(df)
-        profile = profiler.run_full_profile()
+        profile = profile_of(df)
 
         sessions[name] = {
             "df": df,
@@ -2061,17 +2085,13 @@ async def load_saved(filename: str = Form(...)):
         else:
             display_name = base
 
-        profiler = DataProfiler(df)
-        profile = profiler.run_full_profile()
+        # This one came straight off a file, so key the profile cache on the
+        # file's identity rather than hashing 100,000 rows to discover what we
+        # already know.
+        profile = profile_of(df, source_key=file_source_key(filepath))
 
         session_name = f"saved_{base}"
-        sessions[session_name] = {
-            "df": df,
-            "profile": profile,
-            "classifications": {},
-            "pivot_engine": PivotEngine(df),
-            "model_engine": None
-        }
+        sessions[session_name] = build_session_with_profile(df, profile)
 
         # Convert to JSON-safe format - handle NaN, inf, and other non-serializable values
         preview_df = df.head(100).copy()
@@ -2101,8 +2121,7 @@ async def load_url(url: str = Form(...)):
 
         name = f"url_{uuid.uuid4().hex[:8]}"
 
-        profiler = DataProfiler(df)
-        profile = profiler.run_full_profile()
+        profile = profile_of(df)
 
         sessions[name] = {
             "df": df,
@@ -2272,8 +2291,7 @@ async def apply_filter(filename: str = Form(...), column: str = Form(...), value
     session["model_engine"] = None
 
     # Re-profile
-    profiler = DataProfiler(filtered)
-    profile = profiler.run_full_profile()
+    profile = profile_of(filtered)
     session["profile"] = profile
     session["pivot_engine"] = PivotEngine(filtered)
 
@@ -2298,8 +2316,7 @@ async def reset_filter(filename: str = Form(...)):
     del session["original_df"]
     session["model_engine"] = None
 
-    profiler = DataProfiler(df)
-    profile = profiler.run_full_profile()
+    profile = profile_of(df)
     session["profile"] = profile
     session["pivot_engine"] = PivotEngine(df)
 
@@ -2567,8 +2584,7 @@ async def join_census_data(req: JoinCensusRequest):
 
         # 6. Update session with merged data
         session["df"] = merged_df
-        profiler = DataProfiler(merged_df)
-        session["profile"] = profiler.run_full_profile()
+        session["profile"] = profile_of(merged_df)
         session["pivot_engine"] = PivotEngine(merged_df)
         
         msg = f"Successfully joined with Census {req.geography} demographics. "
