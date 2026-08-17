@@ -151,6 +151,71 @@ app.include_router(lms_router)  # LMS CRUD
 # CORE ROUTES
 # =============================================================================
 
+@app.get("/health", tags=["Health"])
+async def health(deep: bool = False):
+    """What is actually working, in one request.
+
+    `/stocks/sp500` returned 500 for an unknown length of time and nothing
+    said so; it was found by hand while checking something else. A status
+    page is only useful if it checks the things that break, so this checks
+    the dependencies rather than reporting that the web server is running -
+    which it obviously is, or nothing would have answered.
+
+    Always 200. A monitor reads the body; returning 503 for a degraded
+    subsystem would make the whole site look down when one feed is off.
+
+    The default checks are local and cheap enough to poll every minute.
+    `?deep=1` adds the two that leave this machine - an SMTP login and the
+    market feed, the latter of which is a slow scrape. Do not poll that one.
+    """
+    checks: dict[str, str] = {}
+
+    # Analyst: the saved datasets it advertises are on disk.
+    try:
+        from apps.analyst.router import SAVED_DATA_DIR
+
+        n = len([f for f in os.listdir(SAVED_DATA_DIR) if f.endswith(".csv")])
+        checks["analyst_datasets"] = "ok" if n else "no datasets found"
+    except Exception as exc:
+        checks["analyst_datasets"] = f"failing: {type(exc).__name__}"
+
+    # Contact submissions are written before mail is attempted, so this file
+    # is the thing that must never be unwritable.
+    try:
+        CONTACT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        checks["contact_log"] = "ok" if os.access(CONTACT_LOG.parent, os.W_OK) else "not writable"
+    except Exception as exc:
+        checks["contact_log"] = f"failing: {type(exc).__name__}"
+
+    checks["mail_configured"] = "ok" if SMTP_PASSWORD and SMTP_USER else "no credential configured"
+
+    if deep:
+        # Leaves the machine. Auth only, no message sent.
+        try:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=8) as srv:
+                srv.starttls()
+                srv.login(SMTP_USER, SMTP_PASSWORD)
+            checks["mail_auth"] = "ok"
+        except Exception as exc:
+            checks["mail_auth"] = f"failing: {type(exc).__name__}"
+
+        # A scrape of somebody else's site, and the likeliest thing here to
+        # be broken at any given moment. Slow: never poll this.
+        try:
+            import today as _td
+
+            checks["market_feed"] = "ok" if _td.get_tickers() is not None else "empty"
+        except Exception as exc:
+            checks["market_feed"] = f"failing: {type(exc).__name__}"
+
+    degraded = [k for k, v in checks.items() if v != "ok"]
+    return {
+        "status": "ok" if not degraded else "degraded",
+        "degraded": degraded,
+        "checks": checks,
+    }
+
+
 # =============================================================================
 # CONTACT ENDPOINT
 # =============================================================================

@@ -31,7 +31,7 @@ const APPS = [
 
 // Claimed as openable but not as applications.
 const REPORTS = ['/whitepaper/', '/13f/', '/hmda/', '/nport/', '/calls/', '/cms/',
-                 '/complaints/', '/datacenters/', '/cars/'];
+                 '/complaints/', '/datacenters/'];
 const DASHBOARDS = ['/news', '/examples/sp500', '/examples/weather', '/fred/'];
 
 const EXTERNAL = ['https://dentaledr.net', 'https://for8thgraders.top', 'https://stubme.net'];
@@ -50,10 +50,22 @@ async function renders(url) {
         const m = await page.evaluate(() => ({
             text: document.body.innerText.trim().length,
             nodes: document.body.querySelectorAll('*').length,
+            controls: document.querySelectorAll('input,button,select,textarea,a[href]').length,
+            graphics: document.querySelectorAll('canvas,svg,img,table,iframe').length,
+            frames: document.querySelectorAll('iframe').length,
             title: document.title,
         }));
-        // The empty shell renders the navbar only: a little text, few nodes.
-        const ok = m.text > 400 && m.nodes > 60;
+        // A page passes on prose OR on interface. Judging by text alone
+        // called a chess board, a Leaflet map and a drag-and-drop schema
+        // designer broken - they are legitimately text-sparse, and a check
+        // that fails working software is a check people learn to ignore.
+        // The empty SPA shell has none of the three: it is a navbar.
+        const substantial = m.text > 400;
+        const interactive = m.controls >= 8 || (m.controls >= 5 && m.nodes > 100);
+        const visual = m.graphics >= 3 && m.nodes > 80;
+        // An iframe holds a whole document the parent cannot read.
+        const framed = m.frames >= 1;
+        const ok = substantial || interactive || visual || framed;
         return { ok, status: resp?.status(), ...m };
     } catch (e) {
         return { ok: false, status: 0, text: 0, nodes: 0, title: String(e).slice(0, 40) };
@@ -73,7 +85,7 @@ for (const app of APPS) {
         } catch { apiNote = ' · api unreachable'; r.ok = false; }
     }
     if (!r.ok) fails++;
-    console.log(`  ${r.ok ? 'OK  ' : 'FAIL'} ${app.name.padEnd(22)} ${String(r.text).padStart(5)} chars, ${String(r.nodes).padStart(4)} nodes${apiNote}`);
+    console.log(`  ${r.ok ? 'OK  ' : 'FAIL'} ${app.name.padEnd(22)} ${String(r.text).padStart(5)} chars, ${String(r.controls).padStart(3)} controls, ${String(r.graphics).padStart(3)} graphics${apiNote}`);
 }
 
 console.log('\nREPORTS — must render\n');

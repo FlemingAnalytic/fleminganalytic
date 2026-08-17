@@ -1,0 +1,156 @@
+# The checks that would have caught what actually went wrong.
+#
+# Each job here exists because of a specific defect that reached production
+# and was found by hand, not because it is a conventional thing to run.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # The live checks catch things that break without anyone deploying -
+    # an expired certificate, a scraped upstream going away, a feed dying.
+    - cron: '17 7 * * *'
+
+jobs:
+  python:
+    name: Python compiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Not a test suite - there barely is one. This catches the syntax
+      # error that would take the whole site down on restart, which is the
+      # single cheapest thing to be certain of.
+      - name: Byte-compile every module
+        run: python -m compileall -q apps main.py chessapi.py
+
+  secrets:
+    name: No credentials in the tree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # A live sending key sat in main.py as a fallback default and was
+      # pushed to a public repository. It read as os.getenv(...) with a
+      # value beside it, which is why a human review missed it twice.
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  live:
+    name: The site is actually up
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Static pages are real HTML, so size is a fair proxy for "something
+      # is there". React routes are NOT: every one of them serves the same
+      # 790-byte shell until JavaScript runs, so curl cannot tell a working
+      # route from a dead one. They get a browser, below.
+      - name: Static pages serve real content
+        run: |
+          fail=0
+          for path in /whitepaper/ /mars/ /13f/ /datacenters/ /fred/ /nuclear/ /pitch/fleming-analytic-onepager.pdf; do
+            bytes=$(curl -sL -o /dev/null -w '%{size_download}' "https://fleminganalytic.com$path")
+            if [ "$bytes" -lt 5000 ]; then
+              echo "::error::$path served only ${bytes} bytes"
+              fail=1
+            else
+              echo "ok  $path  ${bytes} bytes"
+            fi
+          done
+          exit $fail
+
+      - name: The deployed bundle is the one index.html asks for
+        run: |
+          js=$(curl -s https://fleminganalytic.com/ | grep -o 'index-[A-Za-z0-9_-]*\.js' | head -1)
+          [ -n "$js" ] || { echo "::error::index.html references no bundle"; exit 1; }
+          bytes=$(curl -sL -o /dev/null -w '%{size_download}' "https://fleminganalytic.com/assets/$js")
+          echo "bundle $js is ${bytes} bytes"
+          [ "$bytes" -gt 100000 ] || { echo "::error::bundle is suspiciously small"; exit 1; }
+          curl -s "https://fleminganalytic.com/assets/$js" | grep -q 'api\.fleminganalytic\.com/api' \
+            && { echo "::error::bundle points at /api - that 404s every call"; exit 1; } || true
+
+      - name: API answers and reports its own health
+        run: |
+          curl -sf https://api.fleminganalytic.com/health -o health.json || {
+            echo "::error::/health did not respond"; exit 1; }
+          cat health.json
+          # Degraded subsystems are surfaced as warnings, not failures: the
+          # market feed is a scrape of somebody else's site and will go down
+          # on its own schedule. A red build every time it does would train
+          # everyone to ignore red builds.
+          python - <<'PY'
+          import json
+          h = json.load(open('health.json'))
+          for name in h.get('degraded', []):
+              print(f"::warning::{name} is degraded: {h['checks'][name]}")
+          print("status:", h.get("status"))
+          PY
+
+      # Both of these expired unnoticed and a visitor got a full-page
+      # security interstitial instead of the site.
+      - name: Client certificates are valid
+        run: |
+          fail=0
+          for host in fleminganalytic.com dentaledr.net for8thgraders.top stubme.net; do
+            end=$(echo | openssl s_client -connect "$host:443" -servername "$host" 2>/dev/null \
+                  | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+            if [ -z "$end" ]; then
+              echo "::error::$host presented no certificate"; fail=1; continue
+            fi
+            left=$(( ( $(date -d "$end" +%s) - $(date +%s) ) / 86400 ))
+            if [ "$left" -lt 0 ]; then
+              echo "::error::$host certificate EXPIRED ${left#-} days ago"; fail=1
+            elif [ "$left" -lt 14 ]; then
+              echo "::warning::$host certificate expires in $left days"
+            else
+              echo "ok  $host  $left days left"
+            fi
+          done
+          exit $fail
+
+  render:
+    name: React routes actually render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm i -D playwright@1.47.0 && npx playwright install --with-deps chromium
+      # The check that would have caught a home page whose every button was
+      # inert, and a claim of nineteen working applications when two of them
+      # painted a navbar over nothing.
+      - name: Load each route and assert content and working controls
+        run: |
+          node - <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const b = await chromium.launch();
+            const p = await b.newPage();
+            let fail = 0;
+            for (const path of ['/', '/approach', '/contact', '/analyst', '/trading']) {
+              await p.goto('https://fleminganalytic.com' + path, { waitUntil: 'networkidle' });
+              await p.waitForTimeout(1500);
+              const m = await p.evaluate(() => ({
+                text: document.body.innerText.trim().length,
+                inert: [...document.querySelectorAll('a')].filter(a => {
+                  const h = a.getAttribute('href'); return !h || h === '#';
+                }).length,
+              }));
+              const bad = m.text < 300;
+              if (bad) { console.log(`::error::${path} rendered ${m.text} chars`); fail = 1; }
+              else console.log(`ok  ${path}  ${m.text} chars, ${m.inert} inert links`);
+              if (m.inert > 0) console.log(`::warning::${path} has ${m.inert} links going nowhere`);
+            }
+            await b.close();
+            process.exit(fail);
+          })();
+          JS
