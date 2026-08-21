@@ -91,14 +91,40 @@ jobs:
           done
           exit $fail
 
+      # Size is measured across every script index.html references, not on the
+      # entry chunk alone. Since the bundle was split by route the entry chunk
+      # is a ~33 kB loader and the weight sits in its siblings, so a threshold
+      # against that one file measures the chunking strategy rather than the
+      # deploy - it went red the day the splitting landed and stayed there.
       - name: The deployed bundle is the one index.html asks for
         run: |
-          js=$(curl -s https://fleminganalytic.com/ | grep -o 'index-[A-Za-z0-9_-]*\.js' | head -1)
-          [ -n "$js" ] || { echo "::error::index.html references no bundle"; exit 1; }
-          bytes=$(curl -sL -o /dev/null -w '%{size_download}' "https://fleminganalytic.com/assets/$js")
-          echo "bundle $js is ${bytes} bytes"
-          [ "$bytes" -gt 100000 ] || { echo "::error::bundle is suspiciously small"; exit 1; }
-          curl -s "https://fleminganalytic.com/assets/$js" | grep -q 'api\.fleminganalytic\.com/api' \
+          html=$(curl -s https://fleminganalytic.com/)
+          entry=$(echo "$html" | grep -o 'index-[A-Za-z0-9_-]*\.js' | head -1)
+          [ -n "$entry" ] || { echo "::error::index.html references no bundle"; exit 1; }
+
+          # Checked on content-type, not status. Nginx serves the SPA fallback
+          # for anything it cannot match, so a bundle that was never deployed
+          # comes back 200 with the 943-byte index.html in it - a status check
+          # passes happily while the site is broken. A real script is
+          # application/javascript; the fallback is text/html.
+          total=0
+          missing=0
+          for js in $(echo "$html" | grep -o 'assets/[A-Za-z0-9_-]*\.js' | sort -u); do
+            read -r ctype bytes <<<"$(curl -sL -o /dev/null \
+              -w '%{content_type} %{size_download}' "https://fleminganalytic.com/$js")"
+            echo "  $js  ${bytes} bytes (${ctype})"
+            case "$ctype" in
+              *javascript*|*ecmascript*) total=$((total + bytes)) ;;
+              *) echo "::error::$js is not served as JavaScript - it fell through to the SPA shell"
+                 missing=1 ;;
+            esac
+          done
+
+          echo "entry $entry; referenced scripts total ${total} bytes"
+          [ "$missing" = "0" ] || exit 1
+          [ "$total" -gt 100000 ] || { echo "::error::bundle is suspiciously small"; exit 1; }
+
+          curl -s "https://fleminganalytic.com/assets/$entry" | grep -q 'api\.fleminganalytic\.com/api' \
             && { echo "::error::bundle points at /api - that 404s every call"; exit 1; } || true
 
       - name: API answers and reports its own health
