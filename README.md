@@ -1,5 +1,7 @@
 # Fleming Analytic
 
+[![CI](https://github.com/FlemingAnalytic/fleminganalytic/actions/workflows/ci.yml/badge.svg)](https://github.com/FlemingAnalytic/fleminganalytic/actions/workflows/ci.yml)
+
 Two deployables that only make sense together: a FastAPI application behind
 `api.fleminganalytic.com`, and the React client at `fleminganalytic.com` that
 talks to it.

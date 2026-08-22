@@ -77,12 +77,18 @@ jobs:
       # is there". React routes are NOT: every one of them serves the same
       # 790-byte shell until JavaScript runs, so curl cannot tell a working
       # route from a dead one. They get a browser, below.
+      # The floor is 2 kB rather than 5 kB. What this step is really asking is
+      # "did something serve instead of nothing" - a dead route returns a few
+      # hundred bytes of error page or an empty shell, nowhere near this. At
+      # 5 kB the smallest real page, /fred/ at ~7 kB, sat 1.4x over the line
+      # while everything else had 2.4x-17x, so the next paragraph trimmed off
+      # it would have failed the build for no reason anyone could act on.
       - name: Static pages serve real content
         run: |
           fail=0
           for path in /whitepaper/ /mars/ /13f/ /datacenters/ /fred/ /nuclear/ /pitch/fleming-analytic-onepager.pdf; do
             bytes=$(curl -sL -o /dev/null -w '%{size_download}' "https://fleminganalytic.com$path")
-            if [ "$bytes" -lt 5000 ]; then
+            if [ "$bytes" -lt 2000 ]; then
               echo "::error::$path served only ${bytes} bytes"
               fail=1
             else
