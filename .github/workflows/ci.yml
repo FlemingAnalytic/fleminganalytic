@@ -192,7 +192,8 @@ jobs:
             const b = await chromium.launch();
             const p = await b.newPage();
             let fail = 0;
-            for (const path of ['/', '/approach', '/contact', '/analyst', '/trading']) {
+            for (const path of ['/', '/approach', '/contact', '/analyst', '/trading',
+                                '/astro', '/chat', '/news', '/restaurant', '/stjohn']) {
               await p.goto('https://fleminganalytic.com' + path, { waitUntil: 'domcontentloaded' });
               await p.waitForTimeout(1500);
               const m = await p.evaluate(() => ({
