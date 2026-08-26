@@ -37,9 +37,10 @@ examples/
 db/
 csv/
 
-# Built frontends. The client is its own repository; these are its output.
+# Built frontend output. client/ is source and IS tracked here - 58 files
+# already are. Its own .gitignore covers node_modules, dist and zips, so
+# ignoring it wholesale here only silently drops newly added source files.
 client-prod/
-client/
 
 # Server logs and runtime artefacts
 *.log
