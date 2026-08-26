@@ -18,7 +18,7 @@ jobs:
     name: Python compiles
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -37,7 +37,7 @@ jobs:
     name: The app-store privacy policy is intact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -56,7 +56,7 @@ jobs:
     name: No credentials in the tree
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       # A live sending key sat in main.py as a fallback default and was
@@ -71,7 +71,7 @@ jobs:
     name: The site is actually up
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Static pages are real HTML, so size is a fair proxy for "something
       # is there". React routes are NOT: every one of them serves the same
@@ -176,8 +176,8 @@ jobs:
     name: React routes actually render
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '20'
       - run: npm i -D playwright@1.47.0 && npx playwright install --with-deps chromium
@@ -193,7 +193,7 @@ jobs:
             const p = await b.newPage();
             let fail = 0;
             for (const path of ['/', '/approach', '/contact', '/analyst', '/trading']) {
-              await p.goto('https://fleminganalytic.com' + path, { waitUntil: 'networkidle' });
+              await p.goto('https://fleminganalytic.com' + path, { waitUntil: 'domcontentloaded' });
               await p.waitForTimeout(1500);
               const m = await p.evaluate(() => ({
                 text: document.body.innerText.trim().length,
