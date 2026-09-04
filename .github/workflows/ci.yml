@@ -195,13 +195,43 @@ jobs:
         run: |
           node - <<'JS'
           const { chromium } = require('playwright');
+
+          const ROUTES = ['/', '/approach', '/contact', '/analyst', '/trading',
+                          '/astro', '/chat', '/news', '/restaurant'];
+
+          // One flaky navigation from a GitHub runner to the live box is not a
+          // broken site: '/' timed out on 9/2 and 9/4 but loaded on 9/3, all
+          // three against the same deploy. So a route gets three chances to
+          // *load*, and only a load that never succeeds is a network failure.
+          // An empty render is a different thing - a genuine defect - so it is
+          // asserted after the load and is NOT retried. The retry is for the
+          // network, not for the page.
+          async function load(page, path) {
+            let lastErr;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                await page.goto('https://fleminganalytic.com' + path,
+                                { waitUntil: 'domcontentloaded', timeout: 20000 });
+                return null;
+              } catch (e) {
+                lastErr = e;
+                if (attempt < 3) await page.waitForTimeout(3000 * attempt);
+              }
+            }
+            return lastErr;
+          }
+
           (async () => {
             const b = await chromium.launch();
             const p = await b.newPage();
             let fail = 0;
-            for (const path of ['/', '/approach', '/contact', '/analyst', '/trading',
-                                '/astro', '/chat', '/news', '/restaurant']) {
-              await p.goto('https://fleminganalytic.com' + path, { waitUntil: 'domcontentloaded' });
+            for (const path of ROUTES) {
+              const err = await load(p, path);
+              if (err) {
+                console.log(`::error::${path} never loaded after 3 tries - ${err.message.split('\n')[0]}`);
+                fail = 1;
+                continue;
+              }
               await p.waitForTimeout(1500);
               const m = await p.evaluate(() => ({
                 text: document.body.innerText.trim().length,
