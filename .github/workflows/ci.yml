@@ -73,6 +73,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Every curl below is bounded and retried. A bare curl to the live box has
+      # no timeout, so one stalled request from the runner hangs until the job
+      # dies with exit 28 and reds the build over a site that is actually fine
+      # (2026-09-05: /whitepaper/ hung ~2m, everything served 200 by hand). The
+      # flags cap each attempt at 25s and retry transient failures three times,
+      # so only a route that stays unreachable can fail the build - the same
+      # network-not-the-page contract the render job uses.
+
       # Static pages are real HTML, so size is a fair proxy for "something
       # is there". React routes are NOT: every one of them serves the same
       # 790-byte shell until JavaScript runs, so curl cannot tell a working
@@ -87,7 +95,7 @@ jobs:
         run: |
           fail=0
           for path in /whitepaper/ /mars/ /13f/ /datacenters/ /fred/ /nuclear/ /pitch/fleming-analytic-onepager.pdf; do
-            bytes=$(curl -sL -o /dev/null -w '%{size_download}' "https://fleminganalytic.com$path")
+            bytes=$(curl -sL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 -o /dev/null -w '%{size_download}' "https://fleminganalytic.com$path")
             if [ "$bytes" -lt 2000 ]; then
               echo "::error::$path served only ${bytes} bytes"
               fail=1
@@ -104,7 +112,7 @@ jobs:
       # deploy - it went red the day the splitting landed and stayed there.
       - name: The deployed bundle is the one index.html asks for
         run: |
-          html=$(curl -s https://fleminganalytic.com/)
+          html=$(curl -s --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 https://fleminganalytic.com/)
           entry=$(echo "$html" | grep -o 'index-[A-Za-z0-9_-]*\.js' | head -1)
           [ -n "$entry" ] || { echo "::error::index.html references no bundle"; exit 1; }
 
@@ -116,7 +124,7 @@ jobs:
           total=0
           missing=0
           for js in $(echo "$html" | grep -o 'assets/[A-Za-z0-9_-]*\.js' | sort -u); do
-            read -r ctype bytes <<<"$(curl -sL -o /dev/null \
+            read -r ctype bytes <<<"$(curl -sL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 -o /dev/null \
               -w '%{content_type} %{size_download}' "https://fleminganalytic.com/$js")"
             echo "  $js  ${bytes} bytes (${ctype})"
             case "$ctype" in
@@ -130,12 +138,12 @@ jobs:
           [ "$missing" = "0" ] || exit 1
           [ "$total" -gt 100000 ] || { echo "::error::bundle is suspiciously small"; exit 1; }
 
-          curl -s "https://fleminganalytic.com/assets/$entry" | grep -q 'api\.fleminganalytic\.com/api' \
+          curl -s --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 "https://fleminganalytic.com/assets/$entry" | grep -q 'api\.fleminganalytic\.com/api' \
             && { echo "::error::bundle points at /api - that 404s every call"; exit 1; } || true
 
       - name: API answers and reports its own health
         run: |
-          curl -sf https://api.fleminganalytic.com/health -o health.json || {
+          curl -sf --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 https://api.fleminganalytic.com/health -o health.json || {
             echo "::error::/health did not respond"; exit 1; }
           cat health.json
           # Degraded subsystems are surfaced as warnings, not failures: the
@@ -154,13 +162,25 @@ jobs:
       # security interstitial instead of the site.
       - name: Client certificates are valid
         run: |
+          # openssl s_client has no timeout of its own, so a host that accepts
+          # the TCP connection but never finishes the handshake would hang this
+          # step until the job is killed. Each probe is capped with `timeout` and
+          # retried three times, so a transient network failure to a host is not
+          # misread as a missing certificate - only a host that stays unreachable
+          # after three tries, or a cert genuinely near expiry, fails the build.
+          fetch_enddate() {
+            for attempt in 1 2 3; do
+              e=$(echo | timeout 15 openssl s_client -connect "$1:443" -servername "$1" 2>/dev/null \
+                    | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+              [ -n "$e" ] && { echo "$e"; return 0; }
+              sleep 3
+            done
+            return 1
+          }
           fail=0
           for host in fleminganalytic.com dentaledr.net for8thgraders.top stubme.net; do
-            end=$(echo | openssl s_client -connect "$host:443" -servername "$host" 2>/dev/null \
-                  | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
-            if [ -z "$end" ]; then
-              echo "::error::$host presented no certificate"; fail=1; continue
-            fi
+            end=$(fetch_enddate "$host") || {
+              echo "::error::$host presented no certificate after 3 tries"; fail=1; continue; }
             left=$(( ( $(date -d "$end" +%s) - $(date +%s) ) / 86400 ))
             if [ "$left" -lt 0 ]; then
               echo "::error::$host certificate EXPIRED ${left#-} days ago"; fail=1
