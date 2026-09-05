@@ -73,6 +73,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Every curl below is bounded and retried. A bare curl to the live box has
+      # no timeout, so one stalled request from the runner hangs until the job
+      # dies with exit 28 and reds the build over a site that is actually fine
+      # (2026-09-05: /whitepaper/ hung ~2m, everything served 200 by hand). The
+      # flags cap each attempt at 25s and retry transient failures three times,
+      # so only a route that stays unreachable can fail the build - the same
+      # network-not-the-page contract the render job uses.
+
       # Static pages are real HTML, so size is a fair proxy for "something
       # is there". React routes are NOT: every one of them serves the same
       # 790-byte shell until JavaScript runs, so curl cannot tell a working
@@ -87,7 +95,7 @@ jobs:
         run: |
           fail=0
           for path in /whitepaper/ /mars/ /13f/ /datacenters/ /fred/ /nuclear/ /pitch/fleming-analytic-onepager.pdf; do
-            bytes=$(curl -sL -o /dev/null -w '%{size_download}' "https://fleminganalytic.com$path")
+            bytes=$(curl -sL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 -o /dev/null -w '%{size_download}' "https://fleminganalytic.com$path")
             if [ "$bytes" -lt 2000 ]; then
               echo "::error::$path served only ${bytes} bytes"
               fail=1
@@ -104,7 +112,7 @@ jobs:
       # deploy - it went red the day the splitting landed and stayed there.
       - name: The deployed bundle is the one index.html asks for
         run: |
-          html=$(curl -s https://fleminganalytic.com/)
+          html=$(curl -s --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 https://fleminganalytic.com/)
           entry=$(echo "$html" | grep -o 'index-[A-Za-z0-9_-]*\.js' | head -1)
           [ -n "$entry" ] || { echo "::error::index.html references no bundle"; exit 1; }
 
@@ -116,7 +124,7 @@ jobs:
           total=0
           missing=0
           for js in $(echo "$html" | grep -o 'assets/[A-Za-z0-9_-]*\.js' | sort -u); do
-            read -r ctype bytes <<<"$(curl -sL -o /dev/null \
+            read -r ctype bytes <<<"$(curl -sL --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 -o /dev/null \
               -w '%{content_type} %{size_download}' "https://fleminganalytic.com/$js")"
             echo "  $js  ${bytes} bytes (${ctype})"
             case "$ctype" in
@@ -130,12 +138,12 @@ jobs:
           [ "$missing" = "0" ] || exit 1
           [ "$total" -gt 100000 ] || { echo "::error::bundle is suspiciously small"; exit 1; }
 
-          curl -s "https://fleminganalytic.com/assets/$entry" | grep -q 'api\.fleminganalytic\.com/api' \
+          curl -s --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 "https://fleminganalytic.com/assets/$entry" | grep -q 'api\.fleminganalytic\.com/api' \
             && { echo "::error::bundle points at /api - that 404s every call"; exit 1; } || true
 
       - name: API answers and reports its own health
         run: |
-          curl -sf https://api.fleminganalytic.com/health -o health.json || {
+          curl -sf --retry 3 --retry-delay 2 --retry-all-errors --connect-timeout 10 --max-time 25 https://api.fleminganalytic.com/health -o health.json || {
             echo "::error::/health did not respond"; exit 1; }
           cat health.json
           # Degraded subsystems are surfaced as warnings, not failures: the
