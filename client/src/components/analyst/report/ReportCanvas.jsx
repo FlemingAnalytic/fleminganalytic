@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { LayoutGrid, Plus } from 'lucide-react';
 import VisualTile from './VisualTile';
 import { useReport } from '../../../state/ReportContext';
@@ -37,8 +37,9 @@ export default function ReportCanvas() {
             ) : (
                 <div className="grid grid-cols-12 gap-3 auto-rows-[64px]">
                     {visuals.map((visual) => (
-                        <div
+                        <GridCell
                             key={visual.id}
+                            scrollOnMount={visual.id === report.selectedVisualId}
                             onClick={(e) => e.stopPropagation()}
                             style={{
                                 gridColumn: `span ${Math.min(12, visual.position.w)} / span ${Math.min(12, visual.position.w)}`,
@@ -51,12 +52,27 @@ export default function ReportCanvas() {
                                     <VisualTileWrapper visual={visual} />
                                 </div>
                             </div>
-                        </div>
+                        </GridCell>
                     ))}
                 </div>
             )}
         </div>
     );
+}
+
+/**
+ * A tile's place in the grid. A visual that mounts already selected was just
+ * added - by a Visualizations button or a field clicked with nothing selected -
+ * and it lands below the existing tiles, so bring it into view; otherwise the
+ * click looks like it did nothing (2026-11-24).
+ */
+function GridCell({ scrollOnMount, children, ...props }) {
+    const ref = useRef(null);
+    useEffect(() => {
+        if (scrollOnMount) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return <div ref={ref} {...props}>{children}</div>;
 }
 
 /** Keeps the tile filling its grid cell, whatever the visual inside it does. */
