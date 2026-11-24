@@ -14,7 +14,11 @@
 # wrong, in the order they went wrong.
 set -euo pipefail
 
-SRC="${CLIENT_SRC:-/root/src/fleminganalytic-client}"
+# Build from this repository's own client/. The default used to be
+# /root/src/fleminganalytic-client - a separate checkout of a repo that was
+# archived on 2026-08-17 - so the live site kept being built from code that
+# was neither here nor committed anywhere (found 2026-11-23).
+SRC="${CLIENT_SRC:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../client" && pwd)}"
 WEB="${CLIENT_WEB:-/var/www/fleminganalytic/client-prod}"
 SITE="${SITE_URL:-https://fleminganalytic.com}"
 CHECK_ONLY=0
@@ -24,6 +28,17 @@ ok()   { printf "  \033[32m✓\033[0m %s\n" "$1"; }
 bad()  { printf "  \033[31m✗\033[0m %s\n" "$1"; }
 info() { printf "  \033[2m·\033[0m %s\n" "$1"; }
 die()  { bad "$1"; echo; exit 1; }
+
+# Deploy only what is committed. Work from 2026-08-19 ran live for three months
+# without ever being committed, because nothing stopped a build from a dirty
+# tree. ALLOW_DIRTY=1 overrides it for a deliberate one-off.
+if git -C "$SRC" rev-parse --git-dir >/dev/null 2>&1; then
+    if [ -n "$(git -C "$SRC" status --porcelain -- .)" ] && [ "${ALLOW_DIRTY:-0}" != "1" ]; then
+        git -C "$SRC" status --short -- . | head -20
+        die "uncommitted changes in $SRC - commit them first (or ALLOW_DIRTY=1)"
+    fi
+    info "source: $(git -C "$SRC" rev-parse --abbrev-ref HEAD) @ $(git -C "$SRC" rev-parse --short HEAD)"
+fi
 
 echo
 info "building in $SRC"
