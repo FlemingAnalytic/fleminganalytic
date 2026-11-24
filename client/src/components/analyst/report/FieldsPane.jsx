@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Hash, Calendar, MapPin, Type, Sigma, Search, Sparkles } from 'lucide-react';
 import { BORDER, INK, ACCENT } from '../../../theme/vizTheme';
 import { AXIS_CARDINALITY_LIMIT, createVisual } from '../../../state/reportTypes';
+import { FIELD_MIME, placeField } from '../../../utils/fieldAssign';
 import { useDataset } from '../../../state/DatasetContext';
 import { useReport } from '../../../state/ReportContext';
 import { formatCount } from '../../../utils/format';
@@ -15,10 +16,9 @@ import { formatCount } from '../../../utils/format';
  * only job is to show it and to say which fields will not make a readable
  * axis.
  *
- * Clicking a field assigns it, rather than dragging it. Drag is the gesture
- * people picture, but it is a day of sensor and accessibility work that adds
- * no analytical capability, and the well it lands in is the same either way -
- * so it can be added later without touching any of this state.
+ * Clicking a field assigns it to the selected visual; with nothing selected
+ * it starts a new Matrix, the way ticking a field in Excel's pivot list does.
+ * Fields can also be dragged onto a well (FieldWells) to choose the well.
  */
 export default function FieldsPane() {
     const { profile } = useDataset();
@@ -65,17 +65,7 @@ export default function FieldsPane() {
      * which is how a cross-tab gets built without explaining what a cross-tab
      * is. The wells below stay editable for the times this guesses wrong.
      */
-    const assign = (column) => {
-        if (!selectedVisual) return;
-        const wells = selectedVisual.fieldWells;
-        let well;
-        if (column.role === 'measure') {
-            well = 'values';
-        } else {
-            well = wells.rows.length && !wells.cols.length ? 'cols' : 'rows';
-        }
-        dispatch({ type: 'ASSIGN_FIELD', visualId: selectedVisual.id, well, field: column.name });
-    };
+    const assign = (column) => placeField(dispatch, selectedVisual, column);
 
     const applySuggestion = (s) => {
         dispatch({
@@ -138,7 +128,7 @@ export default function FieldsPane() {
                     open={open.measures} onToggle={() => setOpen((o) => ({ ...o, measures: !o.measures }))}
                 >
                     {groups.measures.map((c) => (
-                        <FieldChip key={c.name} column={c} onClick={() => assign(c)} disabled={!selectedVisual} />
+                        <FieldChip key={c.name} column={c} onClick={() => assign(c)} />
                     ))}
                 </Group>
 
@@ -147,7 +137,7 @@ export default function FieldsPane() {
                     open={open.dimensions} onToggle={() => setOpen((o) => ({ ...o, dimensions: !o.dimensions }))}
                 >
                     {groups.dimensions.map((c) => (
-                        <FieldChip key={c.name} column={c} onClick={() => assign(c)} disabled={!selectedVisual} />
+                        <FieldChip key={c.name} column={c} onClick={() => assign(c)} />
                     ))}
                 </Group>
 
@@ -157,18 +147,18 @@ export default function FieldsPane() {
                         open={open.geo} onToggle={() => setOpen((o) => ({ ...o, geo: !o.geo }))}
                     >
                         {groups.geo.map((c) => (
-                            <FieldChip key={c.name} column={c} onClick={() => assign(c)} disabled={!selectedVisual} />
+                            <FieldChip key={c.name} column={c} onClick={() => assign(c)} />
                         ))}
                     </Group>
                 )}
             </div>
 
-            {!selectedVisual && (
-                <p className="px-3 py-2 text-[10.5px] leading-relaxed"
-                   style={{ color: INK.muted, borderTop: `1px solid ${BORDER}` }}>
-                    Select a visual to add fields to it.
-                </p>
-            )}
+            <p className="px-3 py-2 text-[10.5px] leading-relaxed"
+               style={{ color: INK.muted, borderTop: `1px solid ${BORDER}` }}>
+                {selectedVisual
+                    ? 'Click a field to add it to the selected visual, or drag it onto Rows, Columns or Values below.'
+                    : 'Click a field to start a new table, or select a visual to add to it.'}
+            </p>
         </div>
     );
 }
@@ -198,7 +188,7 @@ const TYPE_ICON = {
     categorical: <Type size={10} />,
 };
 
-function FieldChip({ column, onClick, disabled }) {
+function FieldChip({ column, onClick }) {
     // Distinct count is the thing that decides whether a field can be an
     // axis at all, so it is on the chip rather than hidden in a tooltip.
     const tooGranular =
@@ -207,13 +197,18 @@ function FieldChip({ column, onClick, disabled }) {
     return (
         <button
             onClick={onClick}
-            disabled={disabled}
+            draggable
+            onDragStart={(e) => {
+                e.dataTransfer.setData(FIELD_MIME, column.name);
+                e.dataTransfer.setData('text/plain', column.name);
+                e.dataTransfer.effectAllowed = 'copy';
+            }}
             title={
                 tooGranular
                     ? `${formatCount(column.unique)} distinct values — too granular for an axis; the visual will show the top ${AXIS_CARDINALITY_LIMIT}`
                     : `${column.type} · ${formatCount(column.unique)} distinct`
             }
-            className="w-full flex items-center gap-1.5 px-2 py-1 rounded text-[11.5px] text-left transition-colors hover:bg-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full flex items-center gap-1.5 px-2 py-1 rounded text-[11.5px] text-left transition-colors hover:bg-white/[0.06] cursor-grab active:cursor-grabbing"
             style={{ color: tooGranular ? INK.muted : INK.secondary }}
         >
             <span style={{ color: column.role === 'measure' ? ACCENT : INK.faint }}>

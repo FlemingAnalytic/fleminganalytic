@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Rows3, Columns3, Sigma, Weight } from 'lucide-react';
 import { BORDER, INK, ACCENT } from '../../../theme/vizTheme';
 import { AGGREGATIONS } from '../../../state/reportTypes';
 import { useReport } from '../../../state/ReportContext';
 import { useDataset } from '../../../state/DatasetContext';
+import { FIELD_MIME, placeField } from '../../../utils/fieldAssign';
 
 /**
  * What the selected visual is actually asking for.
@@ -24,11 +25,23 @@ export default function FieldWells() {
         .find((p) => p.id === report.activePageId)
         ?.visuals.find((v) => v.id === report.selectedVisualId);
 
+    const columnOf = (name) => profile?.columns?.[name] || Object.values(profile?.columns || {}).find((c) => c.name === name);
+    // A field dropped on a well goes in that well; dropped here with no
+    // visual selected, it starts a new Matrix in its natural well.
+    const dropInto = (well) => (name) => {
+        const column = columnOf(name);
+        if (column) placeField(dispatch, visual || null, column, well || undefined);
+    };
+
     if (!visual) {
         return (
-            <p className="px-3 py-3 text-[10.5px] leading-relaxed" style={{ color: INK.muted }}>
-                No visual selected.
-            </p>
+            <div className="px-3 py-3">
+                <DropZone onDropField={dropInto(null)}>
+                    <p className="px-1 py-2 text-[10.5px] leading-relaxed" style={{ color: INK.muted }}>
+                        No visual selected. Drop a field here, or click one, to start a new table.
+                    </p>
+                </DropZone>
+            </div>
         );
     }
 
@@ -45,11 +58,14 @@ export default function FieldWells() {
     return (
         <div className="px-3 py-2 space-y-3">
             <Well label="Rows" icon={<Rows3 size={11} />} fields={rows}
-                  hint="What to group by" onRemove={(f) => remove('rows', f)} />
+                  hint="What to group by — drop a field here" onRemove={(f) => remove('rows', f)}
+                  onDropField={dropInto('rows')} />
             <Well label="Columns" icon={<Columns3 size={11} />} fields={cols}
-                  hint="Optional — splits into a cross-tab" onRemove={(f) => remove('cols', f)} />
+                  hint="Optional — splits into a cross-tab" onRemove={(f) => remove('cols', f)}
+                  onDropField={dropInto('cols')} />
             <Well label="Values" icon={<Sigma size={11} />} fields={values}
-                  hint="What to measure" onRemove={(f) => remove('values', f)} />
+                  hint="What to measure — drop a field here" onRemove={(f) => remove('values', f)}
+                  onDropField={dropInto('values')} />
 
             <div>
                 <Label>Aggregation</Label>
@@ -104,14 +120,42 @@ function Label({ children }) {
     );
 }
 
-function Well({ label, icon, fields, hint, onRemove }) {
+/** Accepts a field dragged from the Fields pane, highlighting while one is over it. */
+function DropZone({ onDropField, className = '', children }) {
+    const [over, setOver] = useState(false);
+    const accepts = (e) => e.dataTransfer.types.includes(FIELD_MIME);
+    return (
+        <div
+            onDragOver={(e) => {
+                if (!accepts(e)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                if (!over) setOver(true);
+            }}
+            onDragLeave={() => setOver(false)}
+            onDrop={(e) => {
+                setOver(false);
+                const name = e.dataTransfer.getData(FIELD_MIME);
+                if (!name) return;
+                e.preventDefault();
+                onDropField(name);
+            }}
+            className={`rounded p-1 ${className}`}
+            style={{
+                background: over ? 'rgba(57,135,229,0.14)' : 'rgba(255,255,255,0.02)',
+                border: `1px dashed ${over ? ACCENT : BORDER}`,
+            }}
+        >
+            {children}
+        </div>
+    );
+}
+
+function Well({ label, icon, fields, hint, onRemove, onDropField }) {
     return (
         <div>
             <Label>{icon} {label}</Label>
-            <div
-                className="mt-1 min-h-[30px] rounded p-1 space-y-1"
-                style={{ background: 'rgba(255,255,255,0.02)', border: `1px dashed ${BORDER}` }}
-            >
+            <DropZone onDropField={onDropField} className="mt-1 min-h-[30px] space-y-1">
                 {fields.length === 0 ? (
                     <p className="px-1 py-0.5 text-[10.5px]" style={{ color: INK.faint }}>{hint}</p>
                 ) : (
@@ -133,7 +177,7 @@ function Well({ label, icon, fields, hint, onRemove }) {
                         </div>
                     ))
                 )}
-            </div>
+            </DropZone>
         </div>
     );
 }
