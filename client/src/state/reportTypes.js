@@ -80,7 +80,7 @@ export function createVisual(overrides = {}) {
 
 export function emptyReport(filename = null) {
     return {
-        version: 1,
+        version: 2,
         filename,
         pages: [{ id: 'p1', name: 'Page 1', visuals: [] }],
         activePageId: 'p1',

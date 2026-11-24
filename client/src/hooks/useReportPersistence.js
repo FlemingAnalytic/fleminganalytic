@@ -14,7 +14,12 @@
  */
 
 const PREFIX = 'analyst_report_v1:';
-const VERSION = 1;
+// v2 records the starter set a report was seeded with (`seed`), so an untouched
+// starter can be replaced when the dataset's starter questions improve. v1
+// layouts cannot tell a starter from a visitor's own work; they are dropped once
+// and re-seeded (2026-11-23: browsers kept showing "loan age by co_borrower
+// true/false" days after the datasets shipped meaningful starters).
+const VERSION = 2;
 
 export function loadReport(filename) {
     try {
@@ -74,10 +79,13 @@ export function exportReport(report, displayName) {
  */
 export function parseReport(text, filename) {
     const report = JSON.parse(text);
-    if (report?.version !== VERSION) throw new Error('Unsupported report version');
+    // An exported v1 file is a visitor's own report, so import it as v2.
+    if (report?.version !== VERSION && report?.version !== 1) throw new Error('Unsupported report version');
     if (!Array.isArray(report.pages)) throw new Error('Not a report file');
     return {
         ...report,
+        version: VERSION,
+        seed: null,
         filename,
         selectedVisualId: null,
         filters: { page: {}, slicers: {}, crossFilter: null, ...(report.filters || {}) },

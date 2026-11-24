@@ -22,6 +22,13 @@ const ReportContext = createContext(null);
 
 const FILTER_DEBOUNCE_MS = 150;
 
+/** What a set of visuals asks, ignoring ids and where the tiles sit. */
+function seedSignature(visuals) {
+    return JSON.stringify((visuals || []).map((v) => [
+        v.type, v.title, v.fieldWells?.rows, v.fieldWells?.cols, v.fieldWells?.values, v.fieldWells?.agg,
+    ]));
+}
+
 export function ReportProvider({ children }) {
     const { filename, profile } = useDataset();
     const [report, dispatch] = useReducer(reportReducer, null, () => emptyReport(null));
@@ -36,13 +43,21 @@ export function ReportProvider({ children }) {
         if (seededFor.current === filename) return;
         seededFor.current = filename;
 
+        const seeded = seedVisuals(profile);
+        const seed = seedSignature(seeded);
         const saved = loadReport(filename);
-        if (saved) {
+        // Keep a saved report unless it is still exactly the starter it was
+        // seeded with and the dataset now starts somewhere else. Anything the
+        // visitor changed - a field, a chart type, another tile or page - stays.
+        const untouchedStarter = saved && saved.seed && saved.pages.length === 1
+            && seedSignature(saved.pages[0].visuals) === saved.seed;
+        if (saved && !(untouchedStarter && saved.seed !== seed)) {
             dispatch({ type: 'LOAD_REPORT', report: saved });
             return;
         }
         const fresh = emptyReport(filename);
-        fresh.pages[0].visuals = seedVisuals(profile);
+        fresh.pages[0].visuals = seeded;
+        fresh.seed = seed;
         dispatch({ type: 'LOAD_REPORT', report: fresh });
     }, [filename, profile]);
 
