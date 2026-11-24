@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Database, RefreshCw } from 'lucide-react';
 import { DatasetProvider, useDataset } from '../state/DatasetContext';
 import { ReportProvider } from '../state/ReportContext';
@@ -7,6 +7,8 @@ import LeftRail from '../components/analyst/report/LeftRail';
 import ReportCanvas from '../components/analyst/report/ReportCanvas';
 import RightRail from '../components/analyst/report/RightRail';
 import StatusBar from '../components/analyst/report/StatusBar';
+import ModelView from '../components/analyst/model/ModelView';
+import DataView from '../components/analyst/data/DataView';
 import { CANVAS, INK, BORDER, ACCENT } from '../theme/vizTheme';
 
 /**
@@ -33,18 +35,34 @@ export default function AnalystLab() {
 
 function ReportShell() {
     const { hasDataset, sessionLost } = useDataset();
+    // Report and auto-learn are two ways of using the same loaded dataset, so
+    // the view is local state here rather than a route: switching must not
+    // drop the session, the report layout, or a trained model.
+    const [view, setView] = useState('report');
 
     return (
         <div className="report-root h-[calc(100vh-80px)] flex flex-col" style={{ background: CANVAS }}>
-            <ReportHeader />
+            <ReportHeader view={view} onViewChange={setView} />
 
             {sessionLost && <SessionLostBanner />}
 
-            <div className="flex-1 flex min-h-0">
-                <LeftRail />
-                {hasDataset ? <ReportCanvas /> : <NoDataset />}
-                {hasDataset && <RightRail />}
-            </div>
+            {view === 'data' ? (
+                <div className="flex-1 flex min-h-0">
+                    <LeftRail />
+                    <DataView />
+                </div>
+            ) : view === 'model' ? (
+                <div className="flex-1 flex min-h-0">
+                    <LeftRail />
+                    <ModelView />
+                </div>
+            ) : (
+                <div className="flex-1 flex min-h-0">
+                    <LeftRail />
+                    {hasDataset ? <ReportCanvas /> : <NoDataset />}
+                    {hasDataset && <RightRail />}
+                </div>
+            )}
 
             <StatusBar />
         </div>

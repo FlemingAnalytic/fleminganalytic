@@ -103,6 +103,40 @@ export const analystApi = {
   filterValues: (filename, column) =>
     apiClient.post('/analyst/filter-values', { filename, column }),
   getColumns: (filename) => apiClient.get(`/analyst/columns/${filename}`),
+
+  // --- Auto-learning -----------------------------------------------------
+  // The point of these is that the analyst does not have to already know what
+  // predicts what: discover() sweeps every plausible target and reports which
+  // ones are actually modellable, so picking a target is a choice from a
+  // ranked list rather than a guess.
+  discover: (filename, maxTargets = 12) => {
+    const form = new FormData();
+    form.append('filename', filename);
+    form.append('max_targets', String(maxTargets));
+    return apiClient.post('/analyst/discover', form);
+  },
+  detectTask: (filename, target) => {
+    const form = new FormData();
+    form.append('filename', filename);
+    form.append('target', target);
+    return apiClient.post('/analyst/detect-task', form);
+  },
+  trainModel: (filename, { target, features, modelType = 'auto', testSize = 0.2,
+                           task = 'auto', timeSeries = false, timeCol = '' }) => {
+    const form = new FormData();
+    form.append('filename', filename);
+    form.append('target', target);
+    form.append('features', features.join(','));
+    form.append('model_type', modelType);
+    form.append('test_size', String(testSize));
+    form.append('task', task);
+    form.append('time_series', String(timeSeries));
+    form.append('time_col', timeCol);
+    return apiClient.post('/analyst/train-model', form);
+  },
+  // Not through apiClient: its interceptor unwraps to response.data, and a
+  // pickle needs the raw blob plus the filename off the headers.
+  exportModelUrl: (filename) => `${API_BASE_URL}/analyst/export-model/${filename}`,
   visualize: (filename, chartType, x, y, color, column) => 
     apiClient.post('/analyst/visualize', { filename, chart_type: chartType, x, y, color, column }),
   analyzeFeatures: (filename, target = '') => {

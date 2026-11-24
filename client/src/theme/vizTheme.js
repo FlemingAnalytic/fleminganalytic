@@ -6,7 +6,7 @@
  * eight slightly different charts sharing a page.
  *
  * The categorical palette is validated, not chosen by eye: eight slots on
- * the #0f0f11 tile surface, checked for lightness band, chroma floor,
+ * the #20242d tile surface, checked for lightness band, chroma floor,
  * adjacent-pair separation under protanopia and tritanopia, a normal-vision
  * floor, and 3:1 contrast against the surface. Worst adjacent pair is
  * amber/green at deltaE 8.4 under protan - above the 8 threshold, so the
@@ -15,20 +15,28 @@
  * the dark surface before shipping it.
  */
 
-export const CANVAS = '#050505';   // the report background, behind tiles
-export const SURFACE = '#0f0f11';  // a tile's own background - the validated surface
-export const SURFACE_RAISED = '#18181b';
+/*
+ * Canvas and surface were #050505 and #0f0f11: 1.06:1 apart, which is to say
+ * indistinguishable. Tiles had no edge to be seen by - the border was 7% white,
+ * another 1.18:1 - so the report read as one flat black rectangle. Raising the
+ * tile surface to #20242d puts real light between them (1.35:1) and gives the
+ * borders and axis ink something to sit against. The eight series colours were
+ * re-validated against the new surface and pass all six checks unchanged.
+ */
+export const CANVAS = '#000000';   // the report background, behind tiles
+export const SURFACE = '#20242d';  // a tile's own background - the validated surface
+export const SURFACE_RAISED = '#2b3140';
 
-export const BORDER = 'rgba(255,255,255,0.07)';
-export const BORDER_STRONG = 'rgba(255,255,255,0.14)';
-export const ACCENT = '#3987e5';
+export const BORDER = 'rgba(255,255,255,0.18)';
+export const BORDER_STRONG = 'rgba(255,255,255,0.30)';
+export const ACCENT = '#4f96ea';
 
 /** Text never wears a series colour; a mark beside it carries the identity. */
 export const INK = {
-    primary: '#ffffff',
-    secondary: '#c3c2b7',
-    muted: '#7a7975',
-    faint: '#4a4a48',
+    primary: '#ffffff',   // 15.5:1 on the surface
+    secondary: '#cdd3de', // 10.3:1
+    muted: '#98a1b2',     //  6.0:1 - clears AA for body text, which the old #7a7975 did not
+    faint: '#6b7484',     //  3.3:1 - axis lines and rules, the 3:1 graphics floor
 };
 
 /** Assigned in this order, never cycled. A ninth series folds into OTHER. */
@@ -43,7 +51,7 @@ export const SEQUENTIAL = [
 ];
 
 export const OTHER = '#57565a';
-export const GRID = 'rgba(255,255,255,0.06)';
+export const GRID = 'rgba(255,255,255,0.10)';
 
 /**
  * Colour for a named series.

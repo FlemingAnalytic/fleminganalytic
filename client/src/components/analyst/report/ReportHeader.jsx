@@ -15,7 +15,7 @@ import { BORDER, INK, ACCENT, SURFACE } from '../../../theme/vizTheme';
  * shapes everything on the canvas - and the way out of that state should be
  * where the user is looking when they notice.
  */
-export default function ReportHeader() {
+export default function ReportHeader({ view = 'report', onViewChange }) {
     const { displayName, rowCount, colCount, hasDataset } = useDataset();
     const { report, dispatch } = useReport();
     const fileInput = useRef(null);
@@ -53,6 +53,24 @@ export default function ReportHeader() {
                     )}
                 </div>
             </div>
+
+            {hasDataset && onViewChange && (
+                <div className="flex items-center gap-0.5 ml-2 p-0.5 rounded"
+                     style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    {[['data', 'Data'], ['report', 'Report'], ['model', 'Auto-learn']].map(([key, label]) => (
+                        <button
+                            key={key}
+                            onClick={() => onViewChange(key)}
+                            className="px-2.5 py-1 rounded text-[11px] transition-colors"
+                            style={view === key
+                                ? { background: SURFACE, color: INK.primary, border: `1px solid ${BORDER}` }
+                                : { color: INK.muted, border: '1px solid transparent' }}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <div className="flex-1" />
 
