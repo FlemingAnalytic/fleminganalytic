@@ -58,7 +58,15 @@ export function coerceFilterValues(filters, profile) {
     for (const [column, values] of Object.entries(filters || {})) {
         const type = columns[column]?.type;
         const numeric = type === 'continuous' || type === 'categorical_numeric';
+        // A true/false column (co_borrower, repossessed) is profiled as
+        // 'categorical' with top values "True"/"False", but the frame holds
+        // real booleans. Sent as the string "true", isin matches nothing and
+        // a bar click empties every other visual (2026-11-21). Send booleans.
+        const top = columns[column]?.top_values || [];
+        const boolean = top.length > 0 && top.every((t) => t.value === 'True' || t.value === 'False');
         out[column] = values.map((v) => {
+            if (typeof v === 'boolean') return v;
+            if (boolean && /^(true|false)$/i.test(String(v))) return /^true$/i.test(String(v));
             if (!numeric) return String(v);
             const n = Number(v);
             // A numeric column can still hold an unparseable label; leaving

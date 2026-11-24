@@ -31,9 +31,14 @@ export function formatValue(value) {
  * Axis ticks, where space is the constraint and the exact figure is not the
  * point - the tooltip and the matrix carry that.
  */
+// One decimal for small ticks: a 0-1.5% rate axis rounded to whole numbers
+// read "0, 0, 1, 1, 1" (2026-11-23).
+const oneDecimal = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
+
 export function formatAxis(value) {
     if (typeof value !== 'number' || !Number.isFinite(value)) return '';
-    return Math.abs(value) >= 10000 ? compact.format(value) : integer.format(value);
+    if (Math.abs(value) >= 10000) return compact.format(value);
+    return Math.abs(value) < 10 ? oneDecimal.format(value) : integer.format(value);
 }
 
 /** Category labels on an axis, which are frequently long enough to collide. */
