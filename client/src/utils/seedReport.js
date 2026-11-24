@@ -57,15 +57,37 @@ function usableSuggestions(profile) {
     return out;
 }
 
+/**
+ * A column to count rows with when grouping by `dim`: any column but `dim`,
+ * fewest missing values first, then most distinct. Null if there is none,
+ * because a one-column dataset has nothing honest to count it against.
+ */
+function rowCounter(profile, dim) {
+    const others = Object.values(profile?.columns || {}).filter((c) => c.name !== dim);
+    if (!others.length) return null;
+    others.sort((a, b) => (a.missing ?? 0) - (b.missing ?? 0) || (b.unique ?? 0) - (a.unique ?? 0));
+    return others[0].name;
+}
+
 /** Anything at all, for a dataset the profiler had no suggestions about. */
 function fallbackSpecs(profile) {
     const dims = axisDimensions(profile);
     const vals = measures(profile);
     if (!dims.length) return [];
     if (!vals.length) {
-        // No measures: counting rows per category is still a real answer,
-        // and count works against a dimension.
-        return dims.slice(0, 2).map((dim) => ({ dim, measure: dim, agg: 'count', question: null }));
+        // No measures: counting rows per category is still a real answer -
+        // but count a DIFFERENT column. Counting the grouping column by itself
+        // makes its value column collide with its label column, so the table
+        // showed a column of 1s with no categories ("Count of LocationName by
+        // LocationName", 2026-11-23). The server counts non-empty values, so
+        // the column counted is the most complete one, preferring the most
+        // distinct (an id or a name), and the tile says what it shows.
+        return dims.slice(0, 2).flatMap((dim) => {
+            const counter = rowCounter(profile, dim);
+            return counter
+                ? [{ dim, measure: counter, agg: 'count', question: `Number of records by ${dim}` }]
+                : [];
+        });
     }
     return dims.slice(0, 2).map((dim, i) => ({
         dim,
